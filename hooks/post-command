@@ -20,18 +20,16 @@ for entry in $(list_cache_entries) ; do
   entry_path=${!entry_path_prop}
   entry_manifest=${!entry_manifest_prop:-}
 
-  echo "~~~ Restoring cache for ${entry_path}"
-
   # Process each path for the defined scopes
   while IFS=$'\n' read -r scope ; do
     case "$scope" in
     manifest)
       manifest_path=$(build_manifest_cache_path "$entry_manifest")
-      is_debug && echo "~~~ Checking scope $scope at $manifest_path"
-      if [[ -e $manifest_path ]] ; then
-        echo "Found cache directory at ${manifest_path}"
-        cache_hit="$manifest_path"
-        break
+      if [[ ! -e $manifest_path ]] ; then
+        echo "~~~ Caching ${entry_path} to ${manifest_path}"
+        save_cache "${entry_path}" "${manifest_path}"
+      else
+        echo "~~~ Skipping $scope cache, already exists"
       fi
       ;;
     *)
@@ -40,10 +38,4 @@ for entry in $(list_cache_entries) ; do
       ;;
     esac
   done <<< "$(prefix_read_list "$entry_scope_prop")"
-
-  # Check if we found an entry and copy if over
-  if [[ -n "$cache_hit" ]] ; then
-    echo "~~~ Restoring cache from $entry_path"
-    restore_cache "$cache_hit" "$entry_path"
-  fi
 done

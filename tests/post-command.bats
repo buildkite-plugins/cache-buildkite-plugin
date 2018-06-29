@@ -14,7 +14,7 @@ teardown() {
   rm -rf "${BUILDKITE_AGENT_CACHE_PATH}"
 }
 
-@test "Load cache based on a file manifest" {
+@test "Save cache based on a file manifest" {
   export BUILDKITE_ORGANIZATION_SLUG="buildkite"
   export BUILDKITE_PIPELINE_SLUG="agent"
   export BUILDKITE_PLUGIN_CACHE_DEBUG=true
@@ -22,19 +22,19 @@ teardown() {
   export BUILDKITE_PLUGIN_CACHE_0_MANIFEST="tests/data/my_files.lock"
   export BUILDKITE_PLUGIN_CACHE_0_SCOPES_0="manifest"
 
-  # write out a pre-existing manifest cache
-  my_files_cached="${BUILDKITE_AGENT_CACHE_PATH}/manifest/1d7861b510532800513bbc79056b8fae22e77c36"
-  mkdir -p "${my_files_cached}"
-  echo "all the llamas" > "${my_files_cached}/llamas.txt"
+  # write out some local files
+  mkdir -p tests/data/my_files
+  echo "all the llamas" > "tests/data/my_files/llamas.txt"
 
   # write out a local manifest
   mkdir -p tests/data
   echo "manifesty things" > tests/data/my_files.lock
 
-  run "$PWD/hooks/post-checkout"
+  run "$PWD/hooks/post-command"
 
   assert_success
-  assert_output --partial "Restoring cache from"
+  assert_output --partial "Caching tests/data/my_files to"
 
-  assert [ -e 'tests/data/my_files/llamas.txt' ]
+  expected_cache_file="${BUILDKITE_AGENT_CACHE_PATH}/manifest/1d7861b510532800513bbc79056b8fae22e77c36"
+  assert [ -e "$expected_cache_file" ]
 }
