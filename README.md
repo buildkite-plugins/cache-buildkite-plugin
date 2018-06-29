@@ -8,30 +8,23 @@ Buildkite recommends using [Artifacts](https://buildkite.com/docs/builds/artifac
 
 ## Example: Persisting node_modules between builds
 
-The most basic example is persisting node_modules between builds, either by a hash of the yarn.lock file or  shared at a pipeline and a branch level.
+The most basic example is persisting node_modules between builds, either by a hash of the yarn.lock file or  shared at a branch level and a pipeline level.
 
-The `install` command is a command that is run after the cache is loaded.
+This uses the default storage which will be the filesystem on the agent.
 
 ```yaml
 steps:
   - plugins:
       "cache:v1.0.0":
         - path: node_modules
-          keys:
-            - "node-modules-{{ checksum 'yarn.lock' }}"
-            - "node-modules-${BUILDKITE_ORGANIZATION_SLUG}-${BUILDKITE_PIPELINE_SLUG}-${BUILDKITE_BRANCH}
-            - "node-modules-${BUILDKITE_ORGANIZATION_SLUG}-${BUILDKITE_PIPELINE_SLUG}"
-          install: >
-            yarn install
+          manifest: yarn.lock
+          scopes:
+            - manifest
+            - branch
+            - pipeline
+          post-restore:
+            - yarn install
 ```
-
-## Functions
-
-The keys can contain functions in the form of `{{ function args... }}`. The following are available:
-
-### checksum <filename>
-
-Returns a checksum for a given file, or if a directory a checksum of all the files inside.
 
 ## Options
 
@@ -39,13 +32,26 @@ Returns a checksum for a given file, or if a directory a checksum of all the fil
 
 The relative path to code in a checkout to cache. This will be where the cached data is written to and where it is restored to.
 
-### `keys`
+### `manifest`
 
-A list of keys that are created in the cache system, in order of most specific and relevant.
+A file to hash that represents the contents of the `path`.
 
-### `install`
+Example: `Gemfile.lock`, `yarn.lock`
 
-A command that is run after cache has been restored, to ensure that the contents are fresh and relevant to your code.
+### `scopes`
+
+The scopes that the cached path will be saved into and restored from, in order of specificity. Possible options are:
+
+  * `manifest` is an exact match on the hash of the files listed in the `manifest` directive.
+  * `branch` is a match on the org slug, pipeline slug and the git branch name
+  * `pipeline` is a match on the org slug and pipeline slug
+  * `org` is a match on the org slug
+
+Keep in mind that the more scopes you specify, the slower save and restore operations will be.
+
+### `post-restore`
+
+Commands to be run after the cache is restored.
 
 Example: `yarn install`
 
