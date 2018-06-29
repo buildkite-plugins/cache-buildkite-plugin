@@ -26,6 +26,25 @@ steps:
             - yarn install
 ```
 
+## Example: Only doing packer builds when files have changed
+
+This is an example of using the cache to skip commands if they don't need to be executed. The step command is only executed if there is a cache miss. This can be used for de-duplicating builds of things like packer or AMI's.
+
+See https://github.com/buildkite/elastic-ci-stack-for-aws/blob/2ce67b7e0875ed47f1e296265881764f8ec4eca9/.buildkite/steps/packer.sh for how we currently do this manually.
+
+```yaml
+steps:
+  - command: ./build_packer_image
+    plugins:
+      "cache:v1.0.0":
+        - path: packer_result.yml
+          manifest:
+             - packer/
+             - plugins/
+          scopes:
+            - manifest
+```
+
 ## Options
 
 ### `path`
