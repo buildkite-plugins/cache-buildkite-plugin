@@ -18,9 +18,9 @@ teardown() {
   export BUILDKITE_ORGANIZATION_SLUG="buildkite"
   export BUILDKITE_PIPELINE_SLUG="agent"
   export BUILDKITE_PLUGIN_CACHE_DEBUG=true
-  export BUILDKITE_PLUGIN_CACHE_0_PATH="tests/data/my_files"
-  export BUILDKITE_PLUGIN_CACHE_0_MANIFEST="tests/data/my_files.lock"
-  export BUILDKITE_PLUGIN_CACHE_0_SCOPES_0="manifest"
+  export BUILDKITE_PLUGIN_CACHE_PATHS_0_PATH="tests/data/my_files"
+  export BUILDKITE_PLUGIN_CACHE_PATHS_0_MANIFEST="tests/data/my_files.lock"
+  export BUILDKITE_PLUGIN_CACHE_PATHS_0_SCOPES_0="manifest"
 
   # write out some local files
   mkdir -p tests/data/my_files

@@ -33,12 +33,13 @@ steps:
   - command: yarn install
     plugins: &plugins
       "cache:v0.0.1":
-        - path: node_modules
-          manifest: yarn.lock
-          scopes:
-            - manifest
-            - branch
-            - pipeline
+        paths:
+          - path: node_modules
+            manifest: yarn.lock
+            scopes:
+              - manifest
+              - branch
+              - pipeline
 
   - wait
   - command: yarn lint
@@ -59,14 +60,15 @@ See https://github.com/buildkite/elastic-ci-stack-for-aws/blob/2ce67b7e0875ed47f
 steps:
   - plugins:
       "cache:v1.0.0":
-        - path: packer_result.yml
-          manifest:
-             - packer/
-             - plugins/
-          scopes:
-            - manifest
-          post-cache-miss:
-            - ./build_packer_image
+        paths:
+          - path: packer_result.yml
+            manifest:
+              - packer/
+              - plugins/
+            scopes:
+              - manifest
+            post-cache-miss:
+              - ./build_packer_image
 ```
 
 ## Storage

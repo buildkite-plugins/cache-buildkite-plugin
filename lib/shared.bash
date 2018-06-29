@@ -22,10 +22,10 @@ function prefix_read_list() {
   fi
 }
 
-# Returns a list of env vars in the form of BUILDKITE_PLUGIN_CACHE_N
+# Returns a list of env vars in the form of BUILDKITE_PLUGIN_CACHE_PATHS_N
 list_cache_entries() {
   while IFS='=' read -r name _ ; do
-    if [[ $name =~ ^(BUILDKITE_PLUGIN_CACHE_[0-9]+) ]] ; then
+    if [[ $name =~ ^(BUILDKITE_PLUGIN_CACHE_PATHS_[0-9]+) ]] ; then
       echo "${BASH_REMATCH[1]}"
     fi
   done < <(env | sort) | uniq

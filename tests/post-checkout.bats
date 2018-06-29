@@ -18,9 +18,9 @@ teardown() {
   export BUILDKITE_ORGANIZATION_SLUG="buildkite"
   export BUILDKITE_PIPELINE_SLUG="agent"
   export BUILDKITE_PLUGIN_CACHE_DEBUG=true
-  export BUILDKITE_PLUGIN_CACHE_0_PATH="tests/data/my_files"
-  export BUILDKITE_PLUGIN_CACHE_0_MANIFEST="tests/data/my_files.lock"
-  export BUILDKITE_PLUGIN_CACHE_0_SCOPES_0="manifest"
+  export BUILDKITE_PLUGIN_CACHE_PATHS_0_PATH="tests/data/my_files"
+  export BUILDKITE_PLUGIN_CACHE_PATHS_0_MANIFEST="tests/data/my_files.lock"
+  export BUILDKITE_PLUGIN_CACHE_PATHS_0_SCOPES_0="manifest"
 
   # write out a pre-existing manifest cache
   my_files_cached="${BUILDKITE_AGENT_CACHE_PATH}/manifest/1d7861b510532800513bbc79056b8fae22e77c36"
