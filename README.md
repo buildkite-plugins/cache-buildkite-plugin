@@ -6,13 +6,31 @@ Often builds involve fetching and and processing large amounts of data that don'
 
 Buildkite recommends using [Artifacts](https://buildkite.com/docs/builds/artifacts) for build artifacts that are the result of a build and useful for humans, where as we see cache as being an optional byproduct of builds that doesn't need to be content addressable.
 
+## Status
+
+This is largely still imaginary 🦑.
+
+* [ ] Basic caching based on a single file manifest
+* [ ] Multiple manifest files
+* [ ] Directories as manifests
+* [ ] Command Execution on cache miss
+* [ ] Scopes:
+  * [ ] manifest
+  * [ ] branch
+  * [ ] pipeline
+  * [ ] org
+* [ ] Hooks
+  * [ ] post-restore
+  * [ ] post-save
+
 ## Example: Persisting node_modules between builds
 
 The most basic example is persisting node_modules between builds, either by a hash of the yarn.lock file or  shared at a branch level and a pipeline level.
 
 ```yaml
 steps:
-  - plugins:
+  - command: yarn install
+    plugins: &plugins
       "cache:v1.0.0":
         - path: node_modules
           manifest: yarn.lock
@@ -20,20 +38,25 @@ steps:
             - manifest
             - branch
             - pipeline
-          post-restore:
-            - yarn install
+
+  - wait
+  - command: yarn lint
+    plugins: *plugins
+
+  - wait
+  - command: yarn test
+    plugins: *plugins
 ```
 
 ## Example: Only doing packer builds when files have changed
 
-This is an example of using the cache to skip commands if they don't need to be executed. The step command is only executed if there is a cache miss. This can be used for de-duplicating builds of things like packer or AMI's.
+This is an example of using the cache to skip commands if they don't need to be executed. The `post-cache-miss` command is only executed if there is a cache miss. This can be used for de-duplicating builds of things like packer or AMI's.
 
 See https://github.com/buildkite/elastic-ci-stack-for-aws/blob/2ce67b7e0875ed47f1e296265881764f8ec4eca9/.buildkite/steps/packer.sh for how we currently do this manually.
 
 ```yaml
 steps:
-  - command: ./build_packer_image
-    plugins:
+  - plugins:
       "cache:v1.0.0":
         - path: packer_result.yml
           manifest:
@@ -41,6 +64,8 @@ steps:
              - plugins/
           scopes:
             - manifest
+          post-cache-miss:
+            - ./build_packer_image
 ```
 
 ## Storage
