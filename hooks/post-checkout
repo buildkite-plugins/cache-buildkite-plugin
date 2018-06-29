@@ -1,5 +1,119 @@
 #!/bin/bash
+set -euo pipefail
 
-set -eu -o pipefail
+is_debug() {
+  [[ "${BUILDKITE_PLUGIN_CACHE_DEBUG:-false}" =~ ^(true|on|1)$ ]]
+}
 
-echo "hello world"
+# Reads either a value or a list from environment
+function prefix_read_list() {
+  local prefix="$1"
+  local parameter="${prefix}_0"
+
+  if [[ -n "${!parameter:-}" ]]; then
+    local i=0
+    local parameter="${prefix}_${i}"
+    while [[ -n "${!parameter:-}" ]]; do
+      echo "${!parameter}"
+      i=$((i+1))
+      parameter="${prefix}_${i}"
+    done
+  elif [[ -n "${!prefix:-}" ]]; then
+    echo "${!prefix}"
+  fi
+}
+
+# Returns a list of env vars in the form of BUILDKITE_PLUGIN_CACHE_N
+list_cache_entries() {
+  while IFS='=' read -r name _ ; do
+    if [[ $name =~ ^(BUILDKITE_PLUGIN_CACHE_[0-9]+) ]] ; then
+      echo "${BASH_REMATCH[1]}"
+    fi
+  done < <(env | sort) | uniq
+}
+
+# Hashes files and directories recursively
+hash_files() {
+  local shasum="false"
+
+  # different operating systems have various shasum commands
+  if hash shasum1 2>/dev/null ; then
+    shasum="shasum1"
+  elif hash shasum 2>/dev/null ; then
+    shasum="shasum"
+  else
+    echo >&2 "No shasum or shasum1 installed"
+    return 1
+  fi
+
+  find "$@" -type f -print0 \
+    | xargs -0 "$shasum" \
+    | awk '{print $1}' \
+    | sort \
+    | "$shasum" \
+    | awk '{print $1}'
+}
+
+build_scope_paths() {
+  local entry="$1"
+  local entry_scope_prop="${entry}_SCOPES"
+
+  while IFS=$'\n' read -r scope ; do
+    case "$scope" in
+    manifest)
+      echo "${BUILDKITE_AGENT_CACHE_PATH?}/manifest/"
+      ;;
+    *)
+      echo >&2 "Unsupported scope '$scope'"
+      return 1
+      ;;
+    esac
+  done <<< "$(prefix_read_list "$entry_scope_prop")"
+}
+
+if [[ -z "${BUILDKITE_AGENT_CACHE_PATH:-}" ]] ; then
+  echo "+++ 🚨 BUILDKITE_AGENT_CACHE_PATH must be set for the cache plugin"
+  exit 1
+fi
+
+# Iterate through cache entries
+for entry in $(list_cache_entries) ; do
+  entry_path_prop="${entry}_PATH"
+  entry_manifest_prop="${entry}_MANIFEST"
+  entry_scope_prop="${entry}_SCOPES"
+
+  entry_path=${!entry_path_prop}
+  entry_manifest=${!entry_manifest_prop:-}
+  entry_manifest_hash=$(hash_files "$entry_manifest")
+
+  echo "~~~ Restoring cache for ${entry_path}"
+  echo "Hash for $entry_manifest is $entry_manifest_hash"
+
+  cache_hit=""
+  cache_hit_scope=""
+
+  # Process each path for the defined scopes
+  while IFS=$'\n' read -r scope ; do
+    case "$scope" in
+    manifest)
+      manifest_path="${BUILDKITE_AGENT_CACHE_PATH?}/manifest/${entry_manifest_hash}"
+      is_debug && echo "~~~ Checking scope $scope at $manifest_path"
+      if [[ -e $manifest_path ]] ; then
+        cache_hit="$manifest_path"
+        cache_hit_scope="$scope"
+        break
+      fi
+      ;;
+    *)
+      echo >&2 "Unsupported scope '$scope'"
+      return 1
+      ;;
+    esac
+  done <<< "$(prefix_read_list "$entry_scope_prop")"
+
+  if [[ -n "$cache_hit" ]] ; then
+    echo "~~~ Cache found for ${cache_hit_scope} scope"
+    cp -av "$cache_hit" "$entry_path"
+    ls -al "$entry_path"
+  fi
+done

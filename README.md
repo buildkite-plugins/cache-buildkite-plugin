@@ -22,6 +22,7 @@ This is largely still imaginary 🦑.
 * [ ] Hooks
   * [ ] post-restore
   * [ ] post-save
+  * [ ] post-cache-miss
 
 ## Example: Persisting node_modules between builds
 
