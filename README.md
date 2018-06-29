@@ -10,12 +10,12 @@ Buildkite recommends using [Artifacts](https://buildkite.com/docs/builds/artifac
 
 This is largely still imaginary 🦑.
 
-* [ ] Basic caching based on a single file manifest
+* [x] Basic caching based on a single file manifest
 * [ ] Multiple manifest files
 * [ ] Directories as manifests
 * [ ] Command Execution on cache miss
 * [ ] Scopes:
-  * [ ] manifest
+  * [x] manifest
   * [ ] branch
   * [ ] pipeline
   * [ ] org
@@ -32,7 +32,7 @@ The most basic example is persisting node_modules between builds, either by a ha
 steps:
   - command: yarn install
     plugins: &plugins
-      "cache:v1.0.0":
+      "cache:v0.0.1":
         - path: node_modules
           manifest: yarn.lock
           scopes:
