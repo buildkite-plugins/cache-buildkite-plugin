@@ -10,8 +10,6 @@ Buildkite recommends using [Artifacts](https://buildkite.com/docs/builds/artifac
 
 The most basic example is persisting node_modules between builds, either by a hash of the yarn.lock file or  shared at a branch level and a pipeline level.
 
-This uses the default storage which will be the filesystem on the agent.
-
 ```yaml
 steps:
   - plugins:
@@ -44,6 +42,14 @@ steps:
           scopes:
             - manifest
 ```
+
+## Storage
+
+Initially cache is stored on the agent filesystem. Different agents on the same host will share a cache, but it's still host-bound.
+
+Agents need to opt-in to this storage by setting `BUILDKITE_AGENT_CACHE_PATH` in their env, otherwise the plugin will fail.
+
+Pretty quickly we will add support for storing this cache on AWS S3, Google Cloud and ilk.
 
 ## Options
 
