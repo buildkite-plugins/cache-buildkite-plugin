@@ -1,7 +1,7 @@
 steps:
   - label: ":shell: Tests"
     plugins:
-      docker-compose#v2.5.1:
+      docker-compose#v2.6.0:
         run: tests
 
   - label: ":shell: Shellcheck"
