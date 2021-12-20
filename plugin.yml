@@ -3,12 +3,7 @@ description: Persist cache in between build steps
 author: https://github.com/lox
 requirements:
   - bash
-  - rsync
 configuration:
   properties:
-    username:
-      type: string
-    server:
-      type: string
-  required:
-    - username
+    paths:
+      type: array
