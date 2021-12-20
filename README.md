@@ -32,14 +32,14 @@ The most basic example is persisting node_modules between builds, either by a ha
 steps:
   - command: yarn install
     plugins: &plugins
-      "cache:v0.0.1":
-        paths:
-          - path: node_modules
-            manifest: yarn.lock
-            scopes:
-              - manifest
-              - branch
-              - pipeline
+      - cache#v0.0.1:
+          paths:
+            - path: node_modules
+              manifest: yarn.lock
+              scopes:
+                - manifest
+                - branch
+                - pipeline
 
   - wait
   - command: yarn lint
@@ -59,16 +59,16 @@ See https://github.com/buildkite/elastic-ci-stack-for-aws/blob/2ce67b7e0875ed47f
 ```yaml
 steps:
   - plugins:
-      "cache:v1.0.0":
-        paths:
-          - path: packer_result.yml
-            manifest:
-              - packer/
-              - plugins/
-            scopes:
-              - manifest
-            post-cache-miss:
-              - ./build_packer_image
+      - cache#v0.0.1:
+          paths:
+            - path: packer_result.yml
+              manifest:
+                - packer/
+                - plugins/
+              scopes:
+                - manifest
+              post-cache-miss:
+                - ./build_packer_image
 ```
 
 ## Storage
