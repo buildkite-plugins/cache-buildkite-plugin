@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 
-load '/usr/local/lib/bats/load.bash'
+load "${BATS_PLUGIN_PATH}/load.bash"
 
 export BUILDKITE_AGENT_CACHE_PATH="${TMPDIR:-/tmp}/cache-plugin-tests/$$"
 
@@ -17,7 +17,6 @@ teardown() {
 @test "Save cache based on a file manifest" {
   export BUILDKITE_ORGANIZATION_SLUG="buildkite"
   export BUILDKITE_PIPELINE_SLUG="agent"
-  export BUILDKITE_PLUGIN_CACHE_DEBUG=true
   export BUILDKITE_PLUGIN_CACHE_PATHS_0_PATH="tests/data/my_files"
   export BUILDKITE_PLUGIN_CACHE_PATHS_0_MANIFEST="tests/data/my_files.lock"
   export BUILDKITE_PLUGIN_CACHE_PATHS_0_SCOPES_0="manifest"
