@@ -40,8 +40,10 @@ hash_files() {
     shasum="shasum1"
   elif hash shasum 2>/dev/null ; then
     shasum="shasum"
+  elif hash sha1sum 2>/dev/null ; then
+    shasum="sha1sum"
   else
-    echo >&2 "No shasum or shasum1 installed"
+    echo >&2 "No shasum implementation installed"
     return 1
   fi
 

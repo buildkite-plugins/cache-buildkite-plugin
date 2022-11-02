@@ -1,13 +1,15 @@
 steps:
   - label: ":shell: Tests"
     plugins:
-      docker-compose#v3.9.0:
+      docker-compose#v4.5.0:
         run: tests
 
   - label: ":shell: Shellcheck"
     plugins:
-      shellcheck#v1.1.2:
-        files: hooks/**
+      shellcheck#v1.3.0:
+        files:
+          - hooks/**
+          - lib/**
         options: "-x"
 
   - label: ":sparkles: Lint"
