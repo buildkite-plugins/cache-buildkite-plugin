@@ -1,39 +1,254 @@
 #!/usr/bin/env bats
 
-load "${BATS_PLUGIN_PATH}/load.bash"
-
-export BUILDKITE_AGENT_CACHE_PATH="${TMPDIR:-/tmp}/cache-plugin-tests/$$"
+# To debug stubs, uncomment these lines:
+# export CACHE_DUMMY_STUB_DEBUG=/dev/tty
 
 setup() {
-  rm -rf tests/data
-  mkdir -p tests/data
+  load "${BATS_PLUGIN_PATH}/load.bash"
+
+  mkdir -p tests/data/my_files
+  echo "all the llamas" > "tests/data/my_files/llamas.txt"
+  echo "no alpacas" > "tests/data/my_files/alpacas.txt"
+
+  export BUILDKITE_PLUGIN_CACHE_BACKEND=dummy
+  export BUILDKITE_PLUGIN_CACHE_PATH=tests/data/my_files
+  export BUILDKITE_PLUGIN_CACHE_MANIFEST=tests/data/my_files/llamas.txt
+
+  # necessary for key-calculations
+  export BUILDKITE_LABEL="step-label"
+  export BUILDKITE_BRANCH="tests"
+  export BUILDKITE_ORGANIZATION_SLUG="bk-cache-test"
+  export BUILDKITE_PIPELINE_SLUG="cache-pipeline"
 }
 
 teardown() {
   rm -rf tests/data
-  rm -rf "${BUILDKITE_AGENT_CACHE_PATH}"
 }
 
-@test "Load cache based on a file manifest" {
-  export BUILDKITE_ORGANIZATION_SLUG="buildkite"
-  export BUILDKITE_PIPELINE_SLUG="agent"
-  export BUILDKITE_PLUGIN_CACHE_PATHS_0_PATH="tests/data/my_files"
-  export BUILDKITE_PLUGIN_CACHE_PATHS_0_MANIFEST="tests/data/my_files.lock"
-  export BUILDKITE_PLUGIN_CACHE_PATHS_0_SCOPES_0="manifest"
+@test 'If not setup for restoring, do nothing' {
+  run "$PWD/hooks/post-checkout"
 
-  # write out a pre-existing manifest cache
-  my_files_cached="${BUILDKITE_AGENT_CACHE_PATH}/manifest/1d7861b510532800513bbc79056b8fae22e77c36"
-  mkdir -p "${my_files_cached}"
-  echo "all the llamas" > "${my_files_cached}/llamas.txt"
+  assert_success
+  assert_output --partial 'Cache not setup for restoring'
+}
 
-  # write out a local manifest
-  mkdir -p tests/data
-  echo "manifesty things" > tests/data/my_files.lock
+@test "Missing path fails" {
+  unset BUILDKITE_PLUGIN_CACHE_PATH
+
+  run "$PWD/hooks/post-checkout"
+
+  assert_failure
+  assert_output --partial 'Missing path option'
+}
+
+@test "Invalid level fails" {
+  export BUILDKITE_PLUGIN_CACHE_RESTORE=unreal
+
+  run "$PWD/hooks/post-checkout"
+
+  assert_failure
+  assert_output --partial 'Invalid cache level'
+}
+
+@test 'File-based cache with no manifest fails' {
+  export BUILDKITE_PLUGIN_CACHE_RESTORE=file
+  unset BUILDKITE_PLUGIN_CACHE_MANIFEST
+
+  run "$PWD/hooks/post-checkout"
+
+  assert_failure
+  assert_output --partial 'Missing manifest option'
+}
+
+@test 'Non-existing file-based restore does nothing' {
+  export BUILDKITE_PLUGIN_CACHE_RESTORE=file
+
+  stub cache_dummy \
+    'exists \* : exit 1'
 
   run "$PWD/hooks/post-checkout"
 
   assert_success
-  assert_output --partial "Restoring cache from"
+  assert_output --partial 'Cache miss up to file-level, sorry'
 
-  assert [ -e 'tests/data/my_files/llamas.txt' ]
+  unstub cache_dummy
+}
+
+@test 'Non-existing step-based restore does nothing' {
+  export BUILDKITE_PLUGIN_CACHE_RESTORE=step
+
+  stub cache_dummy \
+    'exists \* : exit 1' \
+    'exists \* : exit 1'
+
+  run "$PWD/hooks/post-checkout"
+
+  assert_success
+  assert_output --partial 'Cache miss up to step-level, sorry'
+
+  unstub cache_dummy
+}
+
+@test 'Non-file level restore without manifest does not check file-level' {
+  export BUILDKITE_PLUGIN_CACHE_RESTORE=step
+  unset BUILDKITE_PLUGIN_CACHE_MANIFEST
+
+  stub cache_dummy \
+    'exists \* : exit 1'
+
+  run "$PWD/hooks/post-checkout"
+
+  assert_success
+  assert_output --partial 'Cache miss up to step-level, sorry'
+
+  unstub cache_dummy
+}
+
+@test 'Non-existing branch-based restore does nothing' {
+  export BUILDKITE_PLUGIN_CACHE_RESTORE=branch
+
+  stub cache_dummy \
+    'exists \* : exit 1' \
+    'exists \* : exit 1' \
+    'exists \* : exit 1'
+
+  run "$PWD/hooks/post-checkout"
+
+  assert_success
+  assert_output --partial 'Cache miss up to branch-level, sorry'
+
+  unstub cache_dummy
+}
+@test 'Non-existing pipeline-based restore does nothing' {
+  export BUILDKITE_PLUGIN_CACHE_RESTORE=pipeline
+
+  stub cache_dummy \
+    'exists \* : exit 1' \
+    'exists \* : exit 1' \
+    'exists \* : exit 1' \
+    'exists \* : exit 1'
+
+  run "$PWD/hooks/post-checkout"
+
+  assert_success
+  assert_output --partial 'Cache miss up to pipeline-level, sorry'
+
+  unstub cache_dummy
+}
+
+@test 'Non-existing all-based restore does nothing' {
+  export BUILDKITE_PLUGIN_CACHE_RESTORE=all
+
+  stub cache_dummy \
+    'exists \* : exit 1' \
+    'exists \* : exit 1' \
+    'exists \* : exit 1' \
+    'exists \* : exit 1' \
+    'exists \* : exit 1'
+
+  run "$PWD/hooks/post-checkout"
+
+  assert_success
+  assert_output --partial 'Cache miss up to all-level, sorry'
+
+  unstub cache_dummy
+}
+
+@test 'Existing file-based restore' {
+  export BUILDKITE_PLUGIN_CACHE_RESTORE=file
+
+  stub cache_dummy \
+    'exists \* : exit 0' \
+    "get \* \* : echo restoring \$2 to \$3"
+
+  run "$PWD/hooks/post-checkout"
+
+  assert_success
+  assert_output --partial 'Cache hit at file level'
+
+  unstub cache_dummy
+}
+
+@test 'Existing file-based restore even when max-level is higher' {
+  export BUILDKITE_PLUGIN_CACHE_RESTORE=all
+
+  stub cache_dummy \
+    'exists \* : exit 0' \
+    "get \* \* : echo restoring \$2 to \$3"
+
+  run "$PWD/hooks/post-checkout"
+
+  assert_success
+  assert_output --partial 'Cache hit at file level'
+
+  unstub cache_dummy
+}
+
+@test 'Existing step-based restore' {
+  export BUILDKITE_PLUGIN_CACHE_RESTORE=step
+
+  stub cache_dummy \
+    'exists \* : exit 1' \
+    'exists \* : exit 0' \
+    "get \* \* : echo restoring \$2 to \$3"
+
+  run "$PWD/hooks/post-checkout"
+
+  assert_success
+  assert_output --partial 'Cache hit at step level'
+
+  unstub cache_dummy
+}
+
+@test 'Existing branch-based restore' {
+  export BUILDKITE_PLUGIN_CACHE_RESTORE=branch
+
+  stub cache_dummy \
+    'exists \* : exit 1' \
+    'exists \* : exit 1' \
+    'exists \* : exit 0' \
+    "get \* \* : echo restoring \$2 to \$3"
+
+  run "$PWD/hooks/post-checkout"
+
+  assert_success
+  assert_output --partial 'Cache hit at branch level'
+
+  unstub cache_dummy
+}
+@test 'Existing pipeline-based restore' {
+  export BUILDKITE_PLUGIN_CACHE_RESTORE=pipeline
+
+  stub cache_dummy \
+    'exists \* : exit 1' \
+    'exists \* : exit 1' \
+    'exists \* : exit 1' \
+    'exists \* : exit 0' \
+    "get \* \* : echo restoring \$2 to \$3"
+
+  run "$PWD/hooks/post-checkout"
+
+  assert_success
+  assert_output --partial 'Cache hit at pipeline level'
+
+  unstub cache_dummy
+}
+
+@test 'Existing all-based restore does nothing' {
+  export BUILDKITE_PLUGIN_CACHE_RESTORE=all
+
+  stub cache_dummy \
+    'exists \* : exit 1' \
+    'exists \* : exit 1' \
+    'exists \* : exit 1' \
+    'exists \* : exit 1' \
+    'exists \* : exit 0' \
+    "get \* \* : echo restoring \$2 to \$3"
+
+  run "$PWD/hooks/post-checkout"
+
+  assert_success
+  assert_output --partial 'Cache hit at all level'
+
+  unstub cache_dummy
 }
