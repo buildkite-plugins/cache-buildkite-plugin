@@ -13,7 +13,12 @@ if [ -z "${CACHE_PATH}" ] ; then
   exit 1
 fi
 
-LEVEL=$(plugin_read_config SAVE)
+LEVEL=$(plugin_read_config SAVE 'no')
+if [ "${LELVE}" = 'no' ]; then
+  echo 'Cache not setup for saving'
+  exit 0
+fi
+
 KEY=$(build_key "${LEVEL}" "${CACHE_PATH}")
 
 if ! backend_exec exists "${KEY}"; then
