@@ -1,0 +1,16 @@
+#!/bin/bash
+
+restore_cache() {
+  local from="$1"
+  local to="$2"
+  cp -av "$from" "$to"
+  ls -al "$to"
+}
+
+save_cache() {
+  local from="$1"
+  local to="$2"
+  mkdir -p "$to"
+  cp -av "$from" "$to"
+  ls -al "$to"
+}
