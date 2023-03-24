@@ -27,10 +27,10 @@ sha() {
 hash_files() {
   find "$@" -type f -print0 \
     | xargs -0 "$(sha)" \
-    | awk '{print $1}' \
+    | cut -d\  -f1 \
     | sort \
     | "$(sha)" \
-    | awk '{print $1}'
+    | cut -d\  -f1
 }
 
 build_key() {
@@ -53,7 +53,7 @@ build_key() {
     exit 1
   fi
 
-  echo "cache-${LEVEL}-${BASE}-${CACHE_PATH}" | "$(sha)"
+  echo "cache-${LEVEL}-${BASE}-${CACHE_PATH}" | "$(sha)" | cut -d\  -f1
 }
 
 backend_exec() {
