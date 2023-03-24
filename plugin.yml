@@ -6,7 +6,11 @@ configuration:
   properties:
     backend:
       type: string
-    level:
+    path:
+      type: string
+    manifest:
+      type: string
+    restore:
       type: string
       enum:
         - file
@@ -14,15 +18,14 @@ configuration:
         - branch
         - pipeline
         - all
-    manifest:
-      type: string
-    restore:
-      type: string
     save:
       type: string
+      enum:
+        - file
+        - step
+        - branch
+        - pipeline
+        - all
   additionalProperties: false
-  anyOf:
-    - required:
-      - restore
-    - required:
-      - save
+  required:
+    - path
