@@ -10,7 +10,7 @@ For example, caching the `node_modules` folder as long as the `package-lock.json
 
 ```yaml
 steps:
-  - label: :nodejs: Install dependencies
+  - label: ':nodejs: Install dependencies'
     command: npm install
     plugins:
       - cache#v0.2.0:
@@ -98,7 +98,7 @@ You can always have more complicated logic by using the plugin multiple times wi
 
 ```yaml
 steps:
-  - label: :nodejs: Install dependencies
+  - label: ':nodejs: Install dependencies'
     command: npm install 
     plugins:
       - cache#v0.2.0:
@@ -106,14 +106,14 @@ steps:
           path: node_modules
           restore: pipeline
           save: file
-  - label: :test_tube: Run tests
+  - label: ':test_tube: Run tests'
     command: npm test # does not save cache, not necessary
     plugins:
       - cache#v0.2.0:
           manifest: package-lock.json
           path: node_modules
           restore: file
-  - label: :goal_net: Save stable cache after deployment
+  - label: ':goal_net: Save stable cache after deployment'
     if: build.branch == "master"
     command: npm run deploy
     plugins:

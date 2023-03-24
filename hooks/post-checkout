@@ -29,11 +29,11 @@ for CURRENT_LEVEL in "${SORTED_LEVELS[@]}"; do
     continue
   fi
 
-  KEY=$(build_key ${CURRENT_LEVEL} "${RESTORE_PATH}")
+  KEY=$(build_key "${CURRENT_LEVEL}" "${RESTORE_PATH}")
   if backend_exec exists "${KEY}"; then
     echo "Cache hit at level ${CURRENT_LEVEL}, restoring..."
     backend_exec get "${KEY}" "${RESTORE_PATH}"
   elif [ "${CURRENT_LEVEL}" = "${MAX_LEVEL}" ]; then
     echo 'Cache miss, sorry'
   fi
-fi
+done
