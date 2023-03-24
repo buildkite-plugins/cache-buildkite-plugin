@@ -31,6 +31,24 @@ teardown() {
   assert_output --partial 'Cache not setup for saving'
 }
 
+@test "Missing path fails" {
+  unset BUILDKITE_PLUGIN_CACHE_PATH
+
+  run "$PWD/hooks/post-command"
+
+  assert_failure
+  assert_output --partial 'Missing path option'
+}
+
+@test "Invalid level fails" {
+  export BUILDKITE_PLUGIN_CACHE_SAVE=unreal
+
+  run "$PWD/hooks/post-command"
+
+  assert_failure
+  assert_output --partial 'Invalid cache level'
+}
+
 @test "File-based cache with no manifest fails" {
   export BUILDKITE_PLUGIN_CACHE_SAVE=file
 
