@@ -24,7 +24,7 @@ shift
 
 if [ "$OPCODE" = 'exists' ]; then
   exists_cache "$@"
-elif [ "$OPCODE" = 'restore' ]; then
+elif [ "$OPCODE" = 'get' ]; then
   restore_cache "$@"
 elif [ "$OPCODE" = 'save' ]; then
   save_cache "$@"

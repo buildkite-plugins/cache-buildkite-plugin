@@ -62,7 +62,7 @@ teardown() {
   assert_success
   assert_output ''
 
-  run "${PWD}/backends/cache_fs" restore new-file "${BATS_TEST_TMPDIR}/other-file"
+  run "${PWD}/backends/cache_fs" get new-file "${BATS_TEST_TMPDIR}/other-file"
   assert_success
   assert_output ''
 
@@ -88,13 +88,13 @@ teardown() {
   assert_success
   assert_output ''
 
+  run "${PWD}/backends/cache_fs" get new-folder "${BATS_TEST_TMPDIR}/other-folder"
 
-  run "${PWD}/backends/cache_fs" restore new-folder "${BATS_TEST_TMPDIR}/other-folder"
   assert_success
   assert_output ''
 
   find "${BATS_TEST_TMPDIR}/new-folder"
-  echo asdsadsadother
+
   find "${BATS_TEST_TMPDIR}/other-folder"
   diff -r "${BATS_TEST_TMPDIR}/new-folder" "${BATS_TEST_TMPDIR}/other-folder"
 }
