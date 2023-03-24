@@ -1,9 +1,28 @@
 name: Cache
 description: Persist cache in between build steps
-author: https://github.com/lox
-requirements:
-  - bash
+author: https://github.com/buildkite-plugins
+requirements: []
 configuration:
   properties:
-    paths:
-      type: array
+    backend:
+      type: string
+    level:
+      type: string
+      enum:
+        - file
+        - step
+        - branch
+        - pipeline
+        - all
+    manifest:
+      type: string
+    restore:
+      type: string
+    save:
+      type: string
+  additionalProperties: false
+  anyOf:
+    - required:
+      - restore
+    - required:
+      - save

@@ -36,7 +36,6 @@ steps:
     plugins:
       - cache#v0.2.0:
           manifest: package-lock.json
-          level: pipeline
           restore: node_modules
       - cache#v0.2.0:
           manifest: package-lock.json
@@ -73,14 +72,14 @@ Can be any string (see [Customizable Backends](#customizable-backends)), but the
 
 ### `level` (string, optional, specific values)
 
-Defines the level of operation for the cache. Default: `pipeline`
+Defines the level of operation for the cache. Default: `all`
 
 This plugin uses the following hierarchical structure for caches to be valid (meaning usable), from the most specific to the more general:
 * `file`: only as long as a manifest file does not change (see the `manifest` option)
 * `step`: valid only for the current step
 * `branch`: when the pipeline executes in the context of the current branch
 * `pipeline`: all builds and steps of the pipeline
-* `org` (organization): all the time
+* `all`: all the time
 
 When restoring from cache, **all levels, in the described order, up to the one specified** will be checked. The first one available will be restored and no further levels or checks will be made.
 
