@@ -14,7 +14,7 @@ if [ -z "${CACHE_PATH}" ] ; then
 fi
 
 LEVEL=$(plugin_read_config SAVE 'no')
-if [ "${LELVE}" = 'no' ]; then
+if [ "${LEVEL}" = 'no' ]; then
   echo 'Cache not setup for saving'
   exit 0
 elif [ "${LEVEL}" = 'file' ] && [ -z "$(plugin_read_config MANIFEST)" ]; then
