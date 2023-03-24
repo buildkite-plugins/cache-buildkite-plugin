@@ -49,7 +49,7 @@ build_key() {
   elif [ "${LEVEL}" = 'all' ]; then
     BASE="${BUILDKITE_ORGANIZATION_SLUG}"
   else
-    echo "+++ 🚨 Invalid cache level ${LEVEL}"
+    echo "+++ 🚨 Invalid cache level ${LEVEL}" >&2
     exit 1
   fi
 
