@@ -11,7 +11,7 @@ For example, caching the `node_modules` folder as long as the `package-lock.json
 ```yaml
 steps:
   - label: ':nodejs: Install dependencies'
-    command: npm install
+    command: npm ci
     plugins:
       - cache#v0.2.0:
           manifest: package-lock.json
@@ -106,7 +106,7 @@ You can always have more complicated logic by using the plugin multiple times wi
 ```yaml
 steps:
   - label: ':nodejs: Install dependencies'
-    command: npm install 
+    command: npm ci 
     plugins:
       - cache#v0.2.0:
           manifest: package-lock.json
