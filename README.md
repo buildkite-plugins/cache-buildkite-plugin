@@ -42,8 +42,13 @@ The level to use for saving the cache. See [the available caching levels](#cachi
 
 How cache is stored and restored. Default: `fs`.
 
-Can be any string (see [Customizable Backends](#customizable-backends)), but the plugin natively supports the following:
-* `fs`
+Can be any string (see [Customizable Backends](#customizable-backends)), but the plugin natively supports the following.
+
+#### `fs`
+
+Very basic local filesystem backend.
+
+The `BUILDKITE_PLUGIN_FS_CACHE_FOLDER` environment variable defines where the copies are.
 
 **IMPORTANT**: the `fs` backend just copies files to a different location in the current agent, as it is not a shared or external resource, its caching possibilities are quite limited.
 
