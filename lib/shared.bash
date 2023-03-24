@@ -5,10 +5,6 @@ DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
 # shellcheck source=lib/plugin.bash
 . "${DIR}/plugin.bash"
 
-is_debug() {
-  [[ "${BUILDKITE_PLUGIN_CACHE_DEBUG:-false}" =~ ^(true|on|1)$ ]]
-}
-
 sha() {
   local shasum="false"
 
@@ -62,7 +58,7 @@ build_key() {
 
 backend_exec() {
   local BACKEND_NAME
-  BACKEND_NAME=$(plugin_read_config BACKEND)
+  BACKEND_NAME=$(plugin_read_config BACKEND 'fs')
 
   PATH="${PATH}:${DIR}/../backends" "cache_${BACKEND_NAME}" "$@"
 }
