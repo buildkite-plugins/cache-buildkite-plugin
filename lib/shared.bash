@@ -1,11 +1,15 @@
 #!/bin/bash
 
+DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
+
+# shellcheck source=lib/plugin.bash
+. "${DIR}/plugin.bash"
+
 is_debug() {
   [[ "${BUILDKITE_PLUGIN_CACHE_DEBUG:-false}" =~ ^(true|on|1)$ ]]
 }
 
-# Hashes files and directories recursively
-hash_files() {
+sha() {
   local shasum="false"
 
   # different operating systems have various shasum commands
@@ -20,15 +24,45 @@ hash_files() {
     return 1
   fi
 
+  echo "$shasum"
+}
+
+# Hashes files and directories recursively
+hash_files() {
   find "$@" -type f -print0 \
-    | xargs -0 "$shasum" \
+    | xargs -0 "$(sha)" \
     | awk '{print $1}' \
     | sort \
-    | "$shasum" \
+    | "$(sha)" \
     | awk '{print $1}'
 }
 
-build_manifest_cache_path()  {
-  local manifest="$1"
-  echo "${BUILDKITE_AGENT_CACHE_PATH?}/manifest/$(hash_files "$manifest")"
+build_key() {
+  local LEVEL="$1"
+  local CACHE_PATH="$2"
+  local BASE
+
+  if [ "${LEVEL}" = 'file' ]; then
+    BASE="$(hash_files "$(plugin_read_config MANIFEST)")"
+  elif [ "${LEVEL}" = 'step' ]; then
+    BASE="${BUILDKITE_PIPELINE_SLUG}${BUILDKITE_LABEL}"
+  elif [ "${LEVEL}" = 'branch' ]; then
+    BASE="${BUILDKITE_PIPELINE_SLUG}${BUILDKITE_BRANCH}"
+  elif [ "${LEVEL}" = 'pipeline' ]; then
+    BASE="${BUILDKITE_PIPELINE_SLUG}"
+  elif [ "${LEVEL}" = 'all' ]; then
+    BASE="${BUILDKITE_ORGANIZATION_SLUG}"
+  else
+    echo "+++ 🚨 Invalid cache level ${LEVEL}"
+    exit 1
+  fi
+
+  echo "cache-${LEVEL}-${BASE}-${CACHE_PATH}" | "$(sha)"
+}
+
+backend_exec() {
+  local BACKEND_NAME
+  BACKEND_NAME=$(plugin_read_config BACKEND)
+
+  PATH="${PATH}:${DIR}/../backends" "cache_${BACKEND_NAME}" "$@"
 }
