@@ -11,13 +11,12 @@ restore_cache() {
 save_cache() {
   local to="${CACHE_FOLDER}/$1"
   local from="$2"
-  mkdir -p "$to"
   cp -a "$from" "$to"
 }
 
 exists_cache() {
   local from="${CACHE_FOLDER}/$1"
-  [ -e "${from}" ] 
+  [ -n "$1" ] && [ -e "${from}" ]
 }
 
 OPCODE="$1"
@@ -29,4 +28,6 @@ elif [ "$OPCODE" = 'restore' ]; then
   restore_cache "$@"
 elif [ "$OPCODE" = 'save' ]; then
   save_cache "$@"
+else
+  exit 255
 fi

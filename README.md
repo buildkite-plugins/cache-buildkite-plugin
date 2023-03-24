@@ -89,6 +89,8 @@ Will save whatever is in the `$FILENAME` path (which can be a file or folder) in
 
 You can assume that all calls like this will be preceded by a call to `exists` that would have failed (no point in re-saving an already existing cache).
 
+* should fail with error 255 on any instance, preferably without output
+
 ## Examples
 
 You can always have more complicated logic by using the plugin multiple times with different levels and on different steps. In the following example the `node_modules` folder will be saved and restored with the following logic:
