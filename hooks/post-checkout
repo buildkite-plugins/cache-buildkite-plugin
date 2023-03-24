@@ -22,6 +22,8 @@ elif [ "${MAX_LEVEL}" = 'file' ] && [ -z "$(plugin_read_config MANIFEST)" ]; the
   exit 1
 fi
 
+build_key "${MAX_LEVEL}" "${RESTORE_PATH}" # to validate the level
+
 SORTED_LEVELS=(file step branch pipeline all)
 
 for CURRENT_LEVEL in "${SORTED_LEVELS[@]}"; do
@@ -31,9 +33,11 @@ for CURRENT_LEVEL in "${SORTED_LEVELS[@]}"; do
 
   KEY=$(build_key "${CURRENT_LEVEL}" "${RESTORE_PATH}")
   if backend_exec exists "${KEY}"; then
-    echo "Cache hit at level ${CURRENT_LEVEL}, restoring..."
+    echo "Cache hit at ${CURRENT_LEVEL} level, restoring ${RESTORE_PATH}..."
     backend_exec get "${KEY}" "${RESTORE_PATH}"
+    exit 0
   elif [ "${CURRENT_LEVEL}" = "${MAX_LEVEL}" ]; then
-    echo 'Cache miss, sorry'
+    echo "Cache miss up to ${CURRENT_LEVEL}-level, sorry"
+    break
   fi
 done
