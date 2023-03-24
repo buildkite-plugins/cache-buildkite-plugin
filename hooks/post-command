@@ -17,6 +17,9 @@ LEVEL=$(plugin_read_config SAVE 'no')
 if [ "${LELVE}" = 'no' ]; then
   echo 'Cache not setup for saving'
   exit 0
+elif [ "${LEVEL}" = 'file' ] && [ -z "$(plugin_read_config MANIFEST)" ]; then
+  echo "+++ 🚨 Missing manifest option in the cache plugin for file-level saving"
+  exit 1
 fi
 
 KEY=$(build_key "${LEVEL}" "${CACHE_PATH}")
