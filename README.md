@@ -48,9 +48,10 @@ Can be any string (see [Customizable Backends](#customizable-backends)), but the
 
 Very basic local filesystem backend.
 
-The `BUILDKITE_PLUGIN_FS_CACHE_FOLDER` environment variable defines where the copies are.
+The `BUILDKITE_PLUGIN_FS_CACHE_FOLDER` environment variable defines where the copies are  (default: `/var/cache/buildkite`). If you don't change it, you will need to make sure that the folder exists and `buildkite-agent` has the propper permissions, otherwise the plugin will fail. 
 
 **IMPORTANT**: the `fs` backend just copies files to a different location in the current agent, as it is not a shared or external resource, its caching possibilities are quite limited.
+
 
 ### `manifest` (string, required if using `file` caching level)
 
