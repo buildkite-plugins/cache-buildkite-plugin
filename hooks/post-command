@@ -24,9 +24,5 @@ fi
 
 KEY=$(build_key "${LEVEL}" "${CACHE_PATH}")
 
-if ! backend_exec exists "${KEY}"; then
-  echo "Saving ${LEVEL}-level cache of ${CACHE_PATH}"
-  backend_exec save "${KEY}" "${CACHE_PATH}"
-else
-  echo 'Not saving cache, key already exists'
-fi
+echo "Saving ${LEVEL}-level cache of ${CACHE_PATH}"
+backend_exec save "${KEY}" "${CACHE_PATH}"

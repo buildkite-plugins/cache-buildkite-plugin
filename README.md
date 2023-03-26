@@ -87,8 +87,6 @@ You can assume that all calls like this will be preceded by an `exists` call to 
 
 Will save whatever is in the `$FILENAME` path (which can be a file or folder) in a way that can be identified by the string `$KEY`. A non-0 return code will cause the whole execution to halt and the current step to fail.
 
-You can assume that all calls like this will be preceded by a call to `exists` that would have failed (no point in re-saving an already existing cache).
-
 * should fail with error 255 on any instance, preferably without output
 
 ## Examples
@@ -113,6 +111,7 @@ steps:
           path: node_modules
           restore: pipeline
           save: file
+  - wait: ~
   - label: ':test_tube: Run tests'
     command: npm test # does not save cache, not necessary
     plugins:
@@ -120,6 +119,7 @@ steps:
           manifest: package-lock.json
           path: node_modules
           restore: file
+  - wait: ~  # don't run deploy until tests pass
   - label: ':goal_net: Save stable cache after deployment'
     if: build.branch == "master"
     command: npm run deploy
