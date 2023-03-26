@@ -1,4 +1,4 @@
-# Cache Buildkite Plugin
+# Cache Buildkite Plugin [![Build status](https://badge.buildkite.com/6e29c2a268dddb82724ba1bfb3abd484d8595631849f8dbc31.svg)](https://buildkite.com/buildkite/plugins-cache)
 
 A [Buildkite plugin](https://buildkite.com/docs/agent/v3/plugins) to store ephemeral cache files between builds.
 
