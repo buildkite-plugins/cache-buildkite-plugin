@@ -2,111 +2,136 @@
 
 A [Buildkite plugin](https://buildkite.com/docs/agent/v3/plugins) to store ephemeral cache files between builds.
 
-Often builds involve fetching and and processing large amounts of data that don't change much between builds, for instance downloading npm/gem/pip/cocoapod packages from central registries, or shared compile cache for things like ccache, or large virtual machine images that can be re-used.
+Often builds involve fetching and processing large amounts of data that don't change much between builds, for instance downloading npm/gem/pip/cocoapod packages from central registries, or shared compile cache for things like ccache, or large virtual machine images that can be re-used.
 
 Buildkite recommends using [Artifacts](https://buildkite.com/docs/builds/artifacts) for build artifacts that are the result of a build and useful for humans, where as we see cache as being an optional byproduct of builds that doesn't need to be content addressable.
 
-## Status
-
-This is largely still imaginary 🦑.
-
-* [x] Basic caching based on a single file manifest
-* [ ] Multiple manifest files
-* [ ] Directories as manifests
-* [ ] Command Execution on cache miss
-* [ ] Scopes:
-  * [x] manifest
-  * [ ] branch
-  * [ ] pipeline
-  * [ ] org
-* [ ] Hooks
-  * [ ] post-restore
-  * [ ] post-save
-  * [ ] post-cache-miss
-
-## Example: Persisting node_modules between builds
-
-The most basic example is persisting node_modules between builds, either by a hash of the yarn.lock file or  shared at a branch level and a pipeline level.
+For example, caching the `node_modules` folder as long as the `package-lock.json` file does not change can be done as follows:
 
 ```yaml
 steps:
-  - command: yarn install
-    plugins: &plugins
-      - cache#v0.0.1:
-          paths:
-            - path: node_modules
-              manifest: yarn.lock
-              scopes:
-                - manifest
-                - branch
-                - pipeline
-
-  - wait
-  - command: yarn lint
-    plugins: *plugins
-
-  - wait
-  - command: yarn test
-    plugins: *plugins
+  - label: ':nodejs: Install dependencies'
+    command: npm ci
+    plugins:
+      - cache#v0.2.0:
+          manifest: package-lock.json
+          path: node_modules
+          restore: file
+          save: file
 ```
 
-## Example: Only doing packer builds when files have changed
+## Mandatory parameters
 
-This is an example of using the cache to skip commands if they don't need to be executed. The `post-cache-miss` command is only executed if there is a cache miss. This can be used for de-duplicating builds of things like packer or AMI's.
+### `path` (string)
 
-See https://github.com/buildkite/elastic-ci-stack-for-aws/blob/2ce67b7e0875ed47f1e296265881764f8ec4eca9/.buildkite/steps/packer.sh for how we currently do this manually.
+The file or folder to cache.
 
-```yaml
-steps:
-  - plugins:
-      - cache#v0.0.1:
-          paths:
-            - path: packer_result.yml
-              manifest:
-                - packer/
-                - plugins/
-              scopes:
-                - manifest
-              post-cache-miss:
-                - ./build_packer_image
-```
+### At least one of the following
 
-## Storage
+#### `restore` (string, specific values)
 
-Initially cache is stored on the agent filesystem. Different agents on the same host will share a cache, but it's still host-bound.
+The maximum caching level to restore, if available. See [the available caching levels](#caching-levels)
 
-Agents need to opt-in to this storage by setting `BUILDKITE_AGENT_CACHE_PATH` in their env, otherwise the plugin will fail.
+#### `save` (string, specific values)
 
-Pretty quickly we will add support for storing this cache on AWS S3, Google Cloud and ilk.
+The level to use for saving the cache. See [the available caching levels](#caching-levels)
 
 ## Options
 
-### `path`
+### `backend` (string)
 
-The relative path to code in a checkout to cache. This will be where the cached data is written to and where it is restored to.
+How cache is stored and restored. Default: `fs`.
 
-### `manifest`
+Can be any string (see [Customizable Backends](#customizable-backends)), but the plugin natively supports the following.
 
-A file to hash that represents the contents of the `path`.
+#### `fs`
 
-Example: `Gemfile.lock`, `yarn.lock`
+Very basic local filesystem backend.
 
-### `scopes`
+The `BUILDKITE_PLUGIN_FS_CACHE_FOLDER` environment variable defines where the copies are  (default: `/var/cache/buildkite`). If you don't change it, you will need to make sure that the folder exists and `buildkite-agent` has the propper permissions, otherwise the plugin will fail. 
 
-The scopes that the cached path will be saved into and restored from, in order of specificity. Possible options are:
+**IMPORTANT**: the `fs` backend just copies files to a different location in the current agent, as it is not a shared or external resource, its caching possibilities are quite limited.
 
-  * `manifest` is an exact match on the hash of the files listed in the `manifest` directive.
-  * `branch` is a match on the org slug, pipeline slug and the git branch name
-  * `pipeline` is a match on the org slug and pipeline slug
-  * `org` is a match on the org slug
 
-Keep in mind that the more scopes you specify, the slower save and restore operations will be.
+### `manifest` (string, required if using `file` caching level)
 
-### `post-restore`
+A path to a file or folder that will be hashed to create file-level caches.
 
-Commands to be run after the cache is restored.
+It will cause an unrecoverable error if either `save` or `restore` are set to `file` and this option is not specified.
 
-Example: `yarn install`
+## Caching levels
+
+This plugin uses the following hierarchical structure for caches to be valid (meaning usable), from the most specific to the more general:
+* `file`: only as long as a manifest file does not change (see the `manifest` option)
+* `step`: valid only for the current step
+* `branch`: when the pipeline executes in the context of the current branch
+* `pipeline`: all builds and steps of the pipeline
+* `all`: all the time
+
+When restoring from cache, **all levels, in the described order, up to the one specified** will be checked. The first one available will be restored and no further levels or checks will be made.
+
+## Customizable backends
+
+One of the greatest flexibilities of this plugin is its flexible backend architecture. You can provide whatever value you want for the `backend` option of this plugin (`X` for example) as long as there is an executable script accessible to the agent named `cache_X` that respects the following execution protocol:
+
+* `cache_X exists $KEY` 
+
+Should exit successfully (0 return code) if any previous call to this very same plugin was made with `cache_x save $KEY`. Any other exit code will mean that there is no valid cache and will be ignored.
+
+* `cache_X get $KEY $FILENAME`
+
+Will restore whatever was previously saved on `$KEY` (using the `save` call described next) to the file or folder `$FILENAME`. A non-0 exit code will cause the whole execution to halth and the current step to fail.
+
+You can assume that all calls like this will be preceded by an `exists` call to ensure that there is something to get.
+
+* `cache_X save $KEY $FILENAME`
+
+Will save whatever is in the `$FILENAME` path (which can be a file or folder) in a way that can be identified by the string `$KEY`. A non-0 return code will cause the whole execution to halt and the current step to fail.
+
+* should fail with error 255 on any instance, preferably without output
+
+## Examples
+
+You can always have more complicated logic by using the plugin multiple times with different levels and on different steps. In the following example the `node_modules` folder will be saved and restored with the following logic:
+
+* first step:
+  - if the `package-lock.json` file has not changed, `node_modules` will be restored as is, run the `npm install` (that should do nothing because no dependencies changed), and skip saving the cache because it already exists
+  - if the `package-lock.json` file has changed, it will restore step-level, branch-level and pipeline-level caches of the `node_modules` folder (the first one that exists), run `npm install` (that should be quick, just installing the differences), and then save the resulting `node_modules` folder as a file-level cache
+* second step:
+  - will restore the file-level cache of the `node_modules` folder saved by the first step and run `npm test`
+* third step (that will only run on the `master` branch):
+  - will restore the file-level cache saved by the first step, run `npm run deploy` and finally save the contents of the `node_modules` folder as a pipeline-level cache for usage as a basis even when the lockfile changes (in the first step)
+
+```yaml
+steps:
+  - label: ':nodejs: Install dependencies'
+    command: npm ci 
+    plugins:
+      - cache#v0.2.0:
+          manifest: package-lock.json
+          path: node_modules
+          restore: pipeline
+          save: file
+  - wait: ~
+  - label: ':test_tube: Run tests'
+    command: npm test # does not save cache, not necessary
+    plugins:
+      - cache#v0.2.0:
+          manifest: package-lock.json
+          path: node_modules
+          restore: file
+  - wait: ~  # don't run deploy until tests pass
+  - label: ':goal_net: Save stable cache after deployment'
+    if: build.branch == "master"
+    command: npm run deploy
+    plugins:
+      - cache#v0.2.0:
+          manifest: package-lock.json
+          path: node_modules
+          restore: file
+          save: pipeline
+
+```
 
 ## License
 

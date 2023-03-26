@@ -1,38 +1,11 @@
 #!/bin/bash
 
-is_debug() {
-  [[ "${BUILDKITE_PLUGIN_CACHE_DEBUG:-false}" =~ ^(true|on|1)$ ]]
-}
+DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
 
-# Reads either a value or a list from environment
-function prefix_read_list() {
-  local prefix="$1"
-  local parameter="${prefix}_0"
+# shellcheck source=lib/plugin.bash
+. "${DIR}/plugin.bash"
 
-  if [[ -n "${!parameter:-}" ]]; then
-    local i=0
-    local parameter="${prefix}_${i}"
-    while [[ -n "${!parameter:-}" ]]; do
-      echo "${!parameter}"
-      i=$((i+1))
-      parameter="${prefix}_${i}"
-    done
-  elif [[ -n "${!prefix:-}" ]]; then
-    echo "${!prefix}"
-  fi
-}
-
-# Returns a list of env vars in the form of BUILDKITE_PLUGIN_CACHE_PATHS_N
-list_cache_entries() {
-  while IFS='=' read -r name _ ; do
-    if [[ $name =~ ^(BUILDKITE_PLUGIN_CACHE_PATHS_[0-9]+) ]] ; then
-      echo "${BASH_REMATCH[1]}"
-    fi
-  done < <(env | sort) | uniq
-}
-
-# Hashes files and directories recursively
-hash_files() {
+sha() {
   local shasum="false"
 
   # different operating systems have various shasum commands
@@ -47,30 +20,45 @@ hash_files() {
     return 1
   fi
 
+  echo "$shasum"
+}
+
+# Hashes files and directories recursively
+hash_files() {
   find "$@" -type f -print0 \
-    | xargs -0 "$shasum" \
-    | awk '{print $1}' \
+    | xargs -0 "$(sha)" \
+    | cut -d\  -f1 \
     | sort \
-    | "$shasum" \
-    | awk '{print $1}'
+    | "$(sha)" \
+    | cut -d\  -f1
 }
 
-build_manifest_cache_path()  {
-  local manifest="$1"
-  echo "${BUILDKITE_AGENT_CACHE_PATH?}/manifest/$(hash_files "$manifest")"
+build_key() {
+  local LEVEL="$1"
+  local CACHE_PATH="$2"
+  local BASE
+
+  if [ "${LEVEL}" = 'file' ]; then
+    BASE="$(hash_files "$(plugin_read_config MANIFEST)")"
+  elif [ "${LEVEL}" = 'step' ]; then
+    BASE="${BUILDKITE_PIPELINE_SLUG}${BUILDKITE_LABEL}"
+  elif [ "${LEVEL}" = 'branch' ]; then
+    BASE="${BUILDKITE_PIPELINE_SLUG}${BUILDKITE_BRANCH}"
+  elif [ "${LEVEL}" = 'pipeline' ]; then
+    BASE="${BUILDKITE_PIPELINE_SLUG}"
+  elif [ "${LEVEL}" = 'all' ]; then
+    BASE="${BUILDKITE_ORGANIZATION_SLUG}"
+  else
+    echo "+++ 🚨 Invalid cache level ${LEVEL}" >&2
+    exit 1
+  fi
+
+  echo "cache-${LEVEL}-${BASE}-${CACHE_PATH}" | "$(sha)" | cut -d\  -f1
 }
 
-restore_cache() {
-  local from="$1"
-  local to="$2"
-  cp -av "$from" "$to"
-  ls -al "$to"
-}
+backend_exec() {
+  local BACKEND_NAME
+  BACKEND_NAME=$(plugin_read_config BACKEND 'fs')
 
-save_cache() {
-  local from="$1"
-  local to="$2"
-  mkdir -p "$to"
-  cp -av "$from" "$to"
-  ls -al "$to"
+  PATH="${PATH}:${DIR}/../backends" "cache_${BACKEND_NAME}" "$@"
 }

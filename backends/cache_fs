@@ -1,0 +1,33 @@
+#!/bin/bash
+
+CACHE_FOLDER="${BUILDKITE_PLUGIN_FS_CACHE_FOLDER:-/var/cache/buildkite}"
+
+restore_cache() {
+  local from="${CACHE_FOLDER}/$1"
+  local to="$2"
+  cp -a "$from" "$to"
+}
+
+save_cache() {
+  local to="${CACHE_FOLDER}/$1"
+  local from="$2"
+  cp -a "$from" "$to"
+}
+
+exists_cache() {
+  local from="${CACHE_FOLDER}/$1"
+  [ -n "$1" ] && [ -e "${from}" ]
+}
+
+OPCODE="$1"
+shift
+
+if [ "$OPCODE" = 'exists' ]; then
+  exists_cache "$@"
+elif [ "$OPCODE" = 'get' ]; then
+  restore_cache "$@"
+elif [ "$OPCODE" = 'save' ]; then
+  save_cache "$@"
+else
+  exit 255
+fi

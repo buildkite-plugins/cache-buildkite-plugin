@@ -10,6 +10,7 @@ steps:
         files:
           - hooks/**
           - lib/**
+          - backends/**
         options: "-x"
 
   - label: ":sparkles: Lint"

@@ -4,46 +4,40 @@ set -euo pipefail
 DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
 
 # shellcheck source=lib/shared.bash
-. "$DIR/../lib/shared.bash"
+. "${DIR}/../lib/shared.bash"
 
-if [[ -z "${BUILDKITE_AGENT_CACHE_PATH:-}" ]] ; then
-  echo "+++ 🚨 BUILDKITE_AGENT_CACHE_PATH must be set for the cache plugin"
+RESTORE_PATH=$(plugin_read_config PATH)
+
+if [ -z "${RESTORE_PATH}" ] ; then
+  echo "+++ 🚨 Missing path option in the cache plugin to restore"
   exit 1
 fi
 
-# Iterate through cache entries
-for entry in $(list_cache_entries) ; do
-  entry_path_prop="${entry}_PATH"
-  entry_manifest_prop="${entry}_MANIFEST"
-  entry_scope_prop="${entry}_SCOPES"
+MAX_LEVEL=$(plugin_read_config RESTORE 'no')
+if [ "${MAX_LEVEL}" = 'no' ]; then
+  echo 'Cache not setup for restoring'
+  exit 0
+elif [ "${MAX_LEVEL}" = 'file' ] && [ -z "$(plugin_read_config MANIFEST)" ]; then
+  echo "+++ 🚨 Missing manifest option in the cache plugin for file-level restore"
+  exit 1
+fi
 
-  entry_path=${!entry_path_prop}
-  entry_manifest=${!entry_manifest_prop:-}
+build_key "${MAX_LEVEL}" "${RESTORE_PATH}" # to validate the level
 
-  echo "~~~ Restoring cache for ${entry_path}"
+SORTED_LEVELS=(file step branch pipeline all)
 
-  # Process each path for the defined scopes
-  while IFS=$'\n' read -r scope ; do
-    case "$scope" in
-    manifest)
-      manifest_path=$(build_manifest_cache_path "$entry_manifest")
-      is_debug && echo "~~~ Checking scope $scope at $manifest_path"
-      if [[ -e $manifest_path ]] ; then
-        echo "Found cache directory at ${manifest_path}"
-        cache_hit="$manifest_path"
-        break
-      fi
-      ;;
-    *)
-      echo >&2 "Unsupported scope '$scope'"
-      return 1
-      ;;
-    esac
-  done <<< "$(prefix_read_list "$entry_scope_prop")"
+for CURRENT_LEVEL in "${SORTED_LEVELS[@]}"; do
+  if [ "${CURRENT_LEVEL}" = 'file' ] && [ -z "$(plugin_read_config MANIFEST)" ]; then
+    continue
+  fi
 
-  # Check if we found an entry and copy if over
-  if [[ -n "$cache_hit" ]] ; then
-    echo "~~~ Restoring cache from $entry_path"
-    restore_cache "$cache_hit" "$entry_path"
+  KEY=$(build_key "${CURRENT_LEVEL}" "${RESTORE_PATH}")
+  if backend_exec exists "${KEY}"; then
+    echo "Cache hit at ${CURRENT_LEVEL} level, restoring ${RESTORE_PATH}..."
+    backend_exec get "${KEY}" "${RESTORE_PATH}"
+    exit 0
+  elif [ "${CURRENT_LEVEL}" = "${MAX_LEVEL}" ]; then
+    echo "Cache miss up to ${CURRENT_LEVEL}-level, sorry"
+    break
   fi
 done
