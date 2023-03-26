@@ -58,83 +58,11 @@ teardown() {
   assert_output --partial 'Missing manifest option'
 }
 
-@test "Existing file-level saving does nothing" {
-  export BUILDKITE_PLUGIN_CACHE_SAVE=file
-  export BUILDKITE_PLUGIN_CACHE_MANIFEST=tests/data/my_files/llamas.txt
-
-  stub cache_dummy \
-    'exists \* : exit 0'
-
-  run "$PWD/hooks/post-command"
-
-  assert_success
-  assert_output --partial 'Not saving cache, key already exists'
-
-  unstub cache_dummy
-}
-
-@test "Existing step-level saving does nothing" {
-  export BUILDKITE_PLUGIN_CACHE_SAVE=step
-
-  stub cache_dummy \
-    'exists \* : exit 0'
-
-  run "$PWD/hooks/post-command"
-
-  assert_success
-  assert_output --partial 'Not saving cache, key already exists'
-
-  unstub cache_dummy
-}
-
-@test "Existing branch-level saving does nothing" {
-  export BUILDKITE_PLUGIN_CACHE_SAVE=branch
-
-  stub cache_dummy \
-    'exists \* : exit 0'
-
-  run "$PWD/hooks/post-command"
-
-  assert_success
-  assert_output --partial 'Not saving cache, key already exists'
-
-  unstub cache_dummy
-}
-
-@test "Existing pipeline-level saving does nothing" {
-  export BUILDKITE_PLUGIN_CACHE_SAVE=pipeline
-
-  stub cache_dummy \
-    'exists \* : exit 0'
-
-  run "$PWD/hooks/post-command"
-
-  assert_success
-  assert_output --partial 'Not saving cache, key already exists'
-
-  unstub cache_dummy
-}
-
-@test "Existing all-level saving does nothing" {
-  export BUILDKITE_PLUGIN_CACHE_SAVE=all
-
-  stub cache_dummy \
-    'exists \* : exit 0'
-
-  run "$PWD/hooks/post-command"
-
-  assert_success
-  assert_output --partial 'Not saving cache, key already exists'
-
-  unstub cache_dummy
-}
-
 @test "File-level saving" {
   export BUILDKITE_PLUGIN_CACHE_SAVE=file
   export BUILDKITE_PLUGIN_CACHE_MANIFEST=tests/data/my_files/llamas.txt
 
   stub cache_dummy \
-    'exists \* : exit 1' \
     "save \* \* : echo saving \$3 in \$2"
 
   run "$PWD/hooks/post-command"
@@ -149,7 +77,6 @@ teardown() {
   export BUILDKITE_PLUGIN_CACHE_SAVE=step
 
   stub cache_dummy \
-    'exists \* : exit 1' \
     "save \* \* : echo saving \$3 in \$2"
 
   run "$PWD/hooks/post-command"
@@ -164,7 +91,6 @@ teardown() {
   export BUILDKITE_PLUGIN_CACHE_SAVE=branch
 
   stub cache_dummy \
-    'exists \* : exit 1' \
     "save \* \* : echo saving \$3 in \$2"
 
   run "$PWD/hooks/post-command"
@@ -179,7 +105,6 @@ teardown() {
   export BUILDKITE_PLUGIN_CACHE_SAVE=pipeline
 
   stub cache_dummy \
-    'exists \* : exit 1' \
     "save \* \* : echo saving \$3 in \$2"
 
   run "$PWD/hooks/post-command"
@@ -194,7 +119,6 @@ teardown() {
   export BUILDKITE_PLUGIN_CACHE_SAVE=all
 
   stub cache_dummy \
-    'exists \* : exit 1' \
     "save \* \* : echo saving \$3 in \$2"
 
   run "$PWD/hooks/post-command"
