@@ -1,7 +1,7 @@
 steps:
   - label: ":shell: Tests"
     plugins:
-      docker-compose#v4.5.0:
+      docker-compose#v4.11.0:
         run: tests
 
   - label: ":shell: Shellcheck"
@@ -15,5 +15,5 @@ steps:
 
   - label: ":sparkles: Lint"
     plugins:
-      plugin-linter#v3.0.0:
+      plugin-linter#v3.1.0:
         id: cache

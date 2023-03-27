@@ -1,4 +1,4 @@
-# Cache Buildkite Plugin
+# Cache Buildkite Plugin [![Build status](https://badge.buildkite.com/6e29c2a268dddb82724ba1bfb3abd484d8595631849f8dbc31.svg)](https://buildkite.com/buildkite/plugins-cache)
 
 A [Buildkite plugin](https://buildkite.com/docs/agent/v3/plugins) to store ephemeral cache files between builds.
 
@@ -48,7 +48,7 @@ Defines how the cache is stored and restored. Can be any string (see [Customizab
 
 Very basic local filesystem backend.
 
-The `BUILDKITE_PLUGIN_FS_CACHE_FOLDER` environment variable defines where the copies are.
+The `BUILDKITE_PLUGIN_FS_CACHE_FOLDER` environment variable defines where the copies are  (default: `/var/cache/buildkite`). If you don't change it, you will need to make sure that the folder exists and `buildkite-agent` has the propper permissions, otherwise the plugin will fail. 
 
 **IMPORTANT**: the `fs` backend just copies files to a different location in the current agent, as it is not a shared or external resource, its caching possibilities are quite limited.
 
