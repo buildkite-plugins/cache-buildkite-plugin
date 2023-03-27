@@ -6,7 +6,6 @@ if [ -z "${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}" ]; then
 fi
 
 build_key() {
-  local object="$1"
   if [ -n "${BUILDKITE_PLUGIN_S3_CACHE_PREFIX}" ]; then
     echo "${BUILDKITE_PLUGIN_S3_CACHE_PREFIX}/${1}"
   else
