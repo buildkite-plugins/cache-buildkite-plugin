@@ -40,9 +40,9 @@ The level to use for saving the cache. See [the available caching levels](#cachi
 
 ### `backend` (string)
 
-How cache is stored and restored. Default: `fs`.
-
-Can be any string (see [Customizable Backends](#customizable-backends)), but the plugin natively supports the following.
+Defines how the cache is stored and restored. Can be any string (see [Customizable Backends](#customizable-backends)), but the plugin natively supports the following:
+* `fs` (default)
+* `s3`
 
 #### `fs`
 
@@ -52,6 +52,13 @@ The `BUILDKITE_PLUGIN_FS_CACHE_FOLDER` environment variable defines where the co
 
 **IMPORTANT**: the `fs` backend just copies files to a different location in the current agent, as it is not a shared or external resource, its caching possibilities are quite limited.
 
+#### `s3`
+
+Store things in an S3 bucket. You need to make sure that the `aws` command is available and appropriately configured.
+
+You also need the agent to have access to the following defined environment variables:
+* `BUILDKITE_PLUGIN_S3_CACHE_BUCKET`: the bucket to use (backend will fail if not defined)
+* `BUILDKITE_PLUGIN_S3_CACHE_PREFIX`: optional prefix to use for the cache within the bucket 
 
 ### `manifest` (string, required if using `file` caching level)
 
