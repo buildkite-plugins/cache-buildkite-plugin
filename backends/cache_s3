@@ -1,0 +1,45 @@
+#!/bin/bash
+
+if [ -z "${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}" ]; then
+  echo '+++ 🚨 Missing S3 bucket configuration'
+  exit 1
+fi
+
+build_key() {
+  local object="$1"
+  if [ -n "${BUILDKITE_PLUGIN_S3_CACHE_PREFIX}" ]; then
+    echo "${BUILDKITE_PLUGIN_S3_CACHE_PREFIX}/${1}"
+  else
+    echo "$1"
+  fi
+}
+
+restore_cache() {
+  local from=$1
+  local to="$2"
+  aws s3 sync --recursive "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${from}")" "${to}" 
+}
+
+save_cache() {
+  local to="$1"
+  local from="$2"
+  aws s3 sync --recursive "${from}" "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${to}")"
+}
+
+exists_cache() {
+  if [ -z "$1" ]; then exit 1; fi
+  aws s3api head-object --bucket "${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}" --key "$(build_key "$1")"
+}
+
+OPCODE="$1"
+shift
+
+if [ "$OPCODE" = 'exists' ]; then
+  exists_cache "$@"
+elif [ "$OPCODE" = 'get' ]; then
+  restore_cache "$@"
+elif [ "$OPCODE" = 'save' ]; then
+  save_cache "$@"
+else
+  exit 255
+fi
