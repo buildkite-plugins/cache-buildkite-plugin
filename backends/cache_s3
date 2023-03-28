@@ -27,7 +27,7 @@ save_cache() {
 
 exists_cache() {
   if [ -z "$1" ]; then exit 1; fi
-  aws s3api head-object --bucket "${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}" --key "$(build_key "$1")"
+  aws s3api list-objects-v2 --bucket "${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}" --prefix "$(build_key "$1")" --max-items 1
 }
 
 OPCODE="$1"
