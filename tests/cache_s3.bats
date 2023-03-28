@@ -63,9 +63,9 @@ setup() {
   mkdir "${BATS_TEST_TMPDIR}/s3-cache"
   stub aws \
     "test -e $BATS_TEST_TMPDIR/s3-cache/\$(echo s3://\$4/\$6 | md5sum | cut -c-32)" \
-    "ln -s \$4 $BATS_TEST_TMPDIR/s3-cache/\$(echo \$5 | md5sum | cut -c-32)" \
+    "ln -s \$3 $BATS_TEST_TMPDIR/s3-cache/\$(echo \$4 | md5sum | cut -c-32)" \
     "test -e $BATS_TEST_TMPDIR/s3-cache/\$(echo s3://\$4/\$6 | md5sum | cut -c-32)" \
-    "cp -r $BATS_TEST_TMPDIR/s3-cache/\$(echo \$4 | md5sum | cut -c-32) \$5"
+    "cp -r $BATS_TEST_TMPDIR/s3-cache/\$(echo \$3 | md5sum | cut -c-32) \$4"
     
   run "${PWD}/backends/cache_s3" exists new-file
 
@@ -101,9 +101,9 @@ setup() {
 
   stub aws \
     "test -e $BATS_TEST_TMPDIR/s3-cache/\$(echo s3://\$4/\$6 | md5sum | cut -c-32)" \
-    "ln -s \$4 $BATS_TEST_TMPDIR/s3-cache/\$(echo \$5 | md5sum | cut -c-32)" \
+    "ln -s \$3 $BATS_TEST_TMPDIR/s3-cache/\$(echo \$4 | md5sum | cut -c-32)" \
     "test -e $BATS_TEST_TMPDIR/s3-cache/\$(echo s3://\$4/\$6 | md5sum | cut -c-32)" \
-    "cp -r $BATS_TEST_TMPDIR/s3-cache/\$(echo \$4 | md5sum | cut -c-32) \$5"
+    "cp -r $BATS_TEST_TMPDIR/s3-cache/\$(echo \$3 | md5sum | cut -c-32) \$4"
 
   run "${PWD}/backends/cache_s3" exists new-folder
   
