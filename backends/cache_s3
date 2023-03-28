@@ -16,13 +16,13 @@ build_key() {
 restore_cache() {
   local from=$1
   local to="$2"
-  aws s3 sync --recursive "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${from}")" "${to}" 
+  aws s3 sync "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${from}")" "${to}" 
 }
 
 save_cache() {
   local to="$1"
   local from="$2"
-  aws s3 sync --recursive "${from}" "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${to}")"
+  aws s3 sync "${from}" "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${to}")"
 }
 
 exists_cache() {
