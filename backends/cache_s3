@@ -13,16 +13,24 @@ build_key() {
   fi
 }
 
+verbose() {
+  if [ -n "${BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS}" ]; then
+    echo "--only-show-errors"
+  else
+    echo ""
+  fi
+}
+
 restore_cache() {
   local from="$1"
   local to="$2"
-  aws s3 sync "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${from}")" "${to}"
+  aws s3 sync "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${from}")" "${to}""$(verbose)"
 }
 
 save_cache() {
   local to="$1"
   local from="$2"
-  aws s3 sync "${from}" "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${to}")"
+  aws s3 sync "${from}" "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${to}")" "$(verbose)"
 }
 
 exists_cache() {
