@@ -58,6 +58,39 @@ setup() {
   unstub aws
 }
 
+@test 'Verbose flag passed when environment is set' {
+  export BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS=1
+  stub aws \
+    's3 sync \* \* --only-show-errors : echo ' \
+    's3 sync \* \* --only-show-errors : echo ' \
+    's3 sync \* \* "" : echo ' \
+    's3 sync \* \* "" : echo '
+
+  run "${PWD}/backends/cache_s3" save from to
+
+    assert_success
+    assert_output ''
+
+  run "${PWD}/backends/cache_s3" get from to
+
+  assert_success
+  assert_output ''
+
+  unset BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS
+
+  run "${PWD}/backends/cache_s3" save from to
+
+  assert_success
+  assert_output ''
+
+  run "${PWD}/backends/cache_s3" get from to
+
+  assert_success
+  assert_output ''
+
+  unstub aws
+}
+
 @test 'File exists and can be restored after save' {
   touch "${BATS_TEST_TMPDIR}/new-file"
   mkdir "${BATS_TEST_TMPDIR}/s3-cache"
@@ -106,7 +139,7 @@ setup() {
     "cp -r $BATS_TEST_TMPDIR/s3-cache/\$(echo \$3 | md5sum | cut -c-32) \$4"
 
   run "${PWD}/backends/cache_s3" exists new-folder
-  
+
   assert_failure
   assert_output ''
 
