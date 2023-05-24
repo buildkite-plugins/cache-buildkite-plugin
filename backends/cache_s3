@@ -16,7 +16,7 @@ build_key() {
 restore_cache() {
   local from=$1
   local to="$2"
-  aws s3 sync "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${from}")" "${to}" 
+  aws s3 sync "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${from}")" "${to}"
 }
 
 save_cache() {
