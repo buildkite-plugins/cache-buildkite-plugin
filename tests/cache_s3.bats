@@ -48,7 +48,7 @@ setup() {
 }
 
 @test 'Exists on existing file/folder works' {
-  stub aws 'exit 0'
+  stub aws 'echo "exists"'
 
   run "${PWD}/backends/cache_s3" exists existing
 
@@ -62,11 +62,11 @@ setup() {
   touch "${BATS_TEST_TMPDIR}/new-file"
   mkdir "${BATS_TEST_TMPDIR}/s3-cache"
   stub aws \
-    "test -e $BATS_TEST_TMPDIR/s3-cache/\$(echo s3://\$4/\$6 | md5sum | cut -c-32)" \
+    "echo" \
     "ln -s \$3 $BATS_TEST_TMPDIR/s3-cache/\$(echo \$4 | md5sum | cut -c-32)" \
-    "test -e $BATS_TEST_TMPDIR/s3-cache/\$(echo s3://\$4/\$6 | md5sum | cut -c-32)" \
+    "echo 'exists'" \
     "cp -r $BATS_TEST_TMPDIR/s3-cache/\$(echo \$3 | md5sum | cut -c-32) \$4"
-    
+
   run "${PWD}/backends/cache_s3" exists new-file
 
   assert_failure
@@ -100,13 +100,13 @@ setup() {
   echo 'random content' > "${BATS_TEST_TMPDIR}/new-folder/new-file"
 
   stub aws \
-    "test -e $BATS_TEST_TMPDIR/s3-cache/\$(echo s3://\$4/\$6 | md5sum | cut -c-32)" \
+    "echo" \
     "ln -s \$3 $BATS_TEST_TMPDIR/s3-cache/\$(echo \$4 | md5sum | cut -c-32)" \
-    "test -e $BATS_TEST_TMPDIR/s3-cache/\$(echo s3://\$4/\$6 | md5sum | cut -c-32)" \
+    "echo 'exists'" \
     "cp -r $BATS_TEST_TMPDIR/s3-cache/\$(echo \$3 | md5sum | cut -c-32) \$4"
 
   run "${PWD}/backends/cache_s3" exists new-folder
-  
+
   assert_failure
   assert_output ''
 

@@ -16,7 +16,7 @@ build_key() {
 restore_cache() {
   local from="$1"
   local to="$2"
-  aws s3 sync "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${from}")" "${to}" 
+  aws s3 sync "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${from}")" "${to}"
 }
 
 save_cache() {
@@ -27,7 +27,7 @@ save_cache() {
 
 exists_cache() {
   if [ -z "$1" ]; then exit 1; fi
-  [ ! -z "$(aws s3api list-objects-v2 --bucket "${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}" --prefix "$(build_key "$1")" --max-items 1)" ]
+  [ -n "$(aws s3api list-objects-v2 --bucket "${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}" --prefix "$(build_key "$1")" --max-items 1)" ]
 }
 
 OPCODE="$1"
