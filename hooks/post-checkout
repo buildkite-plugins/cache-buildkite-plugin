@@ -22,7 +22,7 @@ elif [ "${MAX_LEVEL}" = 'file' ] && [ -z "$(plugin_read_config MANIFEST)" ]; the
   exit 1
 fi
 
-build_key "${MAX_LEVEL}" "${RESTORE_PATH}" # to validate the level
+build_key "${MAX_LEVEL}" "${RESTORE_PATH}" > /dev/null # to validate the level
 
 SORTED_LEVELS=(file step branch pipeline all)
 
