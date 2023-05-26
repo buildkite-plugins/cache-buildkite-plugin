@@ -58,6 +58,14 @@ setup() {
   unstub aws
 }
 
+@test 'missing from file/folder works' {
+
+  run "${PWD}/backends/cache_tar_s3" save missing "missing"
+
+  assert_success
+  assert_output 'no file(s) to cache found at: missing'
+}
+
 @test 'File exists and can be restored after save' {
   echo "content" > "${BATS_TEST_TMPDIR}/new-file"
   mkdir "${BATS_TEST_TMPDIR}/s3-cache"
