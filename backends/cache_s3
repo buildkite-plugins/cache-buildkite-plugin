@@ -24,7 +24,7 @@ verbose() {
 restore_cache() {
   local from="$1"
   local to="$2"
-  aws s3 sync "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${from}")" "${to}""$(verbose)"
+  aws s3 sync "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${from}")" "${to}" "$(verbose)"
 }
 
 save_cache() {
