@@ -35,10 +35,14 @@ restore_cache() {
 save_cache() {
   local to="$1"
   local from="$2"
-  local cachefile=cache.tar.gz
-  tar czf "${cachefile}" -C "$(dirname "${from}")" "$(basename "${from}")"
-  aws s3 cp "${cachefile}" "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${to}")" "$(verbose)"
-  rm "${cachefile}"
+  if [ -e "${from}" ]; then
+    local cachefile=cache.tar.gz
+    tar czf "${cachefile}" -C "$(dirname "${from}")" "$(basename "${from}")"
+    aws s3 cp "${cachefile}" "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${to}")" "$(verbose)"
+    rm "${cachefile}"
+  else
+    echo "no file(s) to cache found at: ${from}"
+  fi
 }
 
 exists_cache() {
