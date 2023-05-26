@@ -48,9 +48,42 @@ setup() {
 }
 
 @test 'Exists on existing file/folder works' {
-  stub aws 'exit 0'
+  stub aws 'echo "exists"'
 
   run "${PWD}/backends/cache_s3" exists existing
+
+  assert_success
+  assert_output ''
+
+  unstub aws
+}
+
+@test 'Verbose flag passed when environment is set' {
+  export BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS=1
+  stub aws \
+    's3 sync \* \* --only-show-errors : echo ' \
+    's3 sync \* \* --only-show-errors : echo ' \
+    's3 sync \* \* "" : echo ' \
+    's3 sync \* \* "" : echo '
+
+  run "${PWD}/backends/cache_s3" save from to
+
+    assert_success
+    assert_output ''
+
+  run "${PWD}/backends/cache_s3" get from to
+
+  assert_success
+  assert_output ''
+
+  unset BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS
+
+  run "${PWD}/backends/cache_s3" save from to
+
+  assert_success
+  assert_output ''
+
+  run "${PWD}/backends/cache_s3" get from to
 
   assert_success
   assert_output ''
@@ -62,11 +95,11 @@ setup() {
   touch "${BATS_TEST_TMPDIR}/new-file"
   mkdir "${BATS_TEST_TMPDIR}/s3-cache"
   stub aws \
-    "test -e $BATS_TEST_TMPDIR/s3-cache/\$(echo s3://\$4/\$6 | md5sum | cut -c-32)" \
+    "echo" \
     "ln -s \$3 $BATS_TEST_TMPDIR/s3-cache/\$(echo \$4 | md5sum | cut -c-32)" \
-    "test -e $BATS_TEST_TMPDIR/s3-cache/\$(echo s3://\$4/\$6 | md5sum | cut -c-32)" \
+    "echo 'exists'" \
     "cp -r $BATS_TEST_TMPDIR/s3-cache/\$(echo \$3 | md5sum | cut -c-32) \$4"
-    
+
   run "${PWD}/backends/cache_s3" exists new-file
 
   assert_failure
@@ -100,13 +133,13 @@ setup() {
   echo 'random content' > "${BATS_TEST_TMPDIR}/new-folder/new-file"
 
   stub aws \
-    "test -e $BATS_TEST_TMPDIR/s3-cache/\$(echo s3://\$4/\$6 | md5sum | cut -c-32)" \
+    "echo" \
     "ln -s \$3 $BATS_TEST_TMPDIR/s3-cache/\$(echo \$4 | md5sum | cut -c-32)" \
-    "test -e $BATS_TEST_TMPDIR/s3-cache/\$(echo s3://\$4/\$6 | md5sum | cut -c-32)" \
+    "echo 'exists'" \
     "cp -r $BATS_TEST_TMPDIR/s3-cache/\$(echo \$3 | md5sum | cut -c-32) \$4"
 
   run "${PWD}/backends/cache_s3" exists new-folder
-  
+
   assert_failure
   assert_output ''
 

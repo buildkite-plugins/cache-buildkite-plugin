@@ -24,18 +24,26 @@ verbose() {
 restore_cache() {
   local from="$1"
   local to="$2"
-  aws s3 sync "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${from}")" "${to}""$(verbose)"
+  local cachefile=cache.tar.gz
+  aws s3 cp "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${from}")" "${cachefile}" "$(verbose)"
+  if [ -e "${cachefile}" ]; then
+    tar xzf "${cachefile}" -C "$(dirname "${to}")"
+    rm "${cachefile}"
+  fi
 }
 
 save_cache() {
   local to="$1"
   local from="$2"
-  aws s3 sync "${from}" "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${to}")" "$(verbose)"
+  local cachefile=cache.tar.gz
+  tar czf "${cachefile}" -C "$(dirname "${from}")" "$(basename "${from}")"
+  aws s3 cp "${cachefile}" "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${to}")" "$(verbose)"
+  rm "${cachefile}"
 }
 
 exists_cache() {
   if [ -z "$1" ]; then exit 1; fi
-  [ -n "$(aws s3api list-objects-v2 --bucket "${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}" --prefix "$(build_key "$1")" --max-items 1)" ]
+  [ ! -z "$(aws s3api list-objects-v2 --bucket "${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}" --prefix "$(build_key "$1")" --max-items 1)" ]
 }
 
 OPCODE="$1"
