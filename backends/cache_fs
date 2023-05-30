@@ -12,7 +12,7 @@ save_cache() {
   local to="${CACHE_FOLDER}/$1"
   local from="$2"
 
-  if [ -n "$1" ] && [ -e "${from}" ]; then
+  if [ -n "$1" ] && [ -e "$to" ]; then
     rm -rf "$to"
   fi
   cp -a "$from" "$to"
