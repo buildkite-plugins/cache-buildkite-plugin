@@ -58,7 +58,9 @@ Store things in an S3 bucket. You need to make sure that the `aws` command is av
 
 You also need the agent to have access to the following defined environment variables:
 * `BUILDKITE_PLUGIN_S3_CACHE_BUCKET`: the bucket to use (backend will fail if not defined)
-* `BUILDKITE_PLUGIN_S3_CACHE_PREFIX`: optional prefix to use for the cache within the bucket 
+* `BUILDKITE_PLUGIN_S3_CACHE_PREFIX`: optional prefix to use for the cache within the bucket
+
+Setting the `BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS` environment variable will reduce logging of file operations towards S3.
 
 ### `manifest` (string, required if using `file` caching level)
 
