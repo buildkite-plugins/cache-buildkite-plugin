@@ -22,9 +22,14 @@ elif [ "${MAX_LEVEL}" = 'file' ] && [ -z "$(plugin_read_config MANIFEST)" ]; the
   exit 1
 fi
 
+COMPRESS=$(plugin_read_config COMPRESSION 'none')
+if ! validate_compression "${COMPRESS}"; then
+  echo "+++ 🚨 Invalid value for compression level"
+  exit 1
+fi
+
 build_key "${MAX_LEVEL}" "${RESTORE_PATH}" # to validate the level
 
-COMPRESS=$(plugin_read_config COMPRESSION 'none')
 ACTUAL_PATH=$(mktemp)
 
 if [ "${COMPRESS}" = 'tgz' ]; then
@@ -48,6 +53,7 @@ for CURRENT_LEVEL in "${SORTED_LEVELS[@]}"; do
     backend_exec get "${KEY}" "${ACTUAL_PATH}"
 
     if [ "${COMPRESS}" != 'none' ]; then
+      echo "Cache is compressed, uncompressing..."
       "${UNCOMPRESS_COMMAND[@]}" "${ACTUAL_PATH}" "${RESTORE_PATH}"
     fi
 

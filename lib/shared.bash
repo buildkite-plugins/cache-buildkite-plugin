@@ -62,3 +62,16 @@ backend_exec() {
 
   PATH="${PATH}:${DIR}/../backends" "cache_${BACKEND_NAME}" "$@"
 }
+
+validate_compression() {
+  local COMPRESSION="$1"
+
+  VALID_COMPRESSIONS=(none tgz zip)
+  for VALID in "${VALID_COMPRESSIONS[@]}"; do
+    if [ "${COMPRESSION}" = "${VALID}" ]; then
+      return 0
+    fi
+  done
+
+  return 1
+}

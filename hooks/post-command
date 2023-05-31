@@ -23,6 +23,10 @@ elif [ "${LEVEL}" = 'file' ] && [ -z "$(plugin_read_config MANIFEST)" ]; then
 fi
 
 COMPRESS=$(plugin_read_config COMPRESSION 'none')
+if ! validate_compression "${COMPRESS}"; then
+  echo "+++ 🚨 Invalid value for compression level"
+  exit 1
+fi
 
 KEY=$(build_key "${LEVEL}" "${CACHE_PATH}" "${COMPRESS}")
 
@@ -33,6 +37,7 @@ elif [ "${COMPRESS}" = 'zip' ]; then
 fi
 
 if [ "${COMPRESS}" != 'none' ]; then
+  echo "Compressing ${CACHE_PATH} with ${COMPRESS}..."
   ACTUAL_PATH=$(mktemp)
   "${COMPRESS_COMMAND[@]}" "${ACTUAL_PATH}" "${CACHE_PATH}"
 else
