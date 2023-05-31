@@ -28,7 +28,7 @@ if ! validate_compression "${COMPRESS}"; then
   exit 1
 fi
 
-build_key "${MAX_LEVEL}" "${RESTORE_PATH}" # to validate the level
+build_key "${MAX_LEVEL}" "${RESTORE_PATH}" >/dev/null # to validate the level
 
 ACTUAL_PATH=$(mktemp)
 
