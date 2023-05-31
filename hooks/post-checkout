@@ -24,7 +24,6 @@ fi
 
 build_key "${MAX_LEVEL}" "${RESTORE_PATH}" # to validate the level
 
-
 COMPRESS=$(plugin_read_config COMPRESSION 'none')
 ACTUAL_PATH=$(mktemp)
 
@@ -49,7 +48,7 @@ for CURRENT_LEVEL in "${SORTED_LEVELS[@]}"; do
     backend_exec get "${KEY}" "${ACTUAL_PATH}"
 
     if [ "${COMPRESS}" != 'none' ]; then
-      "${UNCOMPRESS_COMMAND[@]}" "${CACHE_PATH}" "${ACTUAL_PATH}"
+      "${UNCOMPRESS_COMMAND[@]}" "${ACTUAL_PATH}" "${RESTORE_PATH}"
     fi
 
     exit 0
