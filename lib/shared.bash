@@ -36,9 +36,7 @@ hash_files() {
 build_key() {
   local LEVEL="$1"
   local CACHE_PATH="$2"
-  local BASE
-  local COMPRESSION
-  COMPRESSION=$(plugin_read_config COMPRESSION 'none')
+  local COMPRESSION="${3:-}"
 
   if [ "${LEVEL}" = 'file' ]; then
     BASE="$(hash_files "$(plugin_read_config MANIFEST)")"
