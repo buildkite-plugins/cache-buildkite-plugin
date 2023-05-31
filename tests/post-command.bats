@@ -49,6 +49,16 @@ teardown() {
   assert_output --partial 'Invalid cache level'
 }
 
+@test "Invalid compression level fails" {
+  export BUILDKITE_PLUGIN_CACHE_SAVE=all
+  export BUILDKITE_PLUGIN_CACHE_COMPRESSION=invalid
+
+  run "$PWD/hooks/post-command"
+
+  assert_failure
+  assert_output --partial 'Invalid value for compression option'
+}
+
 @test "File-based cache with no manifest fails" {
   export BUILDKITE_PLUGIN_CACHE_SAVE=file
 
