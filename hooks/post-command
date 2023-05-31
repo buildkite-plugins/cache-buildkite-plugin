@@ -22,9 +22,9 @@ elif [ "${LEVEL}" = 'file' ] && [ -z "$(plugin_read_config MANIFEST)" ]; then
   exit 1
 fi
 
-KEY=$(build_key "${LEVEL}" "${CACHE_PATH}" "${COMPRESS}")
-
 COMPRESS=$(plugin_read_config COMPRESSION 'none')
+
+KEY=$(build_key "${LEVEL}" "${CACHE_PATH}" "${COMPRESS}")
 
 if [ "${COMPRESS}" = 'tgz' ]; then
   COMPRESS_COMMAND=(tar czf)
