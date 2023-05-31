@@ -244,7 +244,7 @@ teardown() {
   unstub cache_dummy
 }
 
-@test 'Existing all-based restore does nothing' {
+@test 'Existing all-based restore' {
   export BUILDKITE_PLUGIN_CACHE_RESTORE=all
 
   stub cache_dummy \
@@ -259,6 +259,23 @@ teardown() {
 
   assert_success
   assert_output --partial 'Cache hit at all level'
+
+  unstub cache_dummy
+}
+
+@test 'Existing lower level restore works' {
+  export BUILDKITE_PLUGIN_CACHE_RESTORE=all
+
+  stub cache_dummy \
+    'exists \* : exit 1' \
+    'exists \* : exit 1' \
+    'exists \* : exit 0' \
+    "get \* \* : echo restoring \$2 to \$3"
+
+  run "$PWD/hooks/post-checkout"
+
+  assert_success
+  assert_output --partial 'Cache hit at branch level'
 
   unstub cache_dummy
 }
