@@ -2,19 +2,19 @@
 set -euo pipefail
 
 lock () {
-  local folder="${1}.lock"
+  local file="${1}.lock"
   (
     set -o noclobber
-    date > "${folder}"
+    date > "${file}"
   ) 2>/dev/null
 }
 
 wait_and_lock () {
-  local folder="${1}.lock"
+  local file="${1}.lock"
   local max_attempts="${2:-5}"
 
   for ATTEMPT in $(seq 1 "${max_attempts}"); do
-    if ! lock "${folder}"; then
+    if ! lock "${1}"; then
       echo 'Waiting for folder lock'
       sleep "${ATTEMPT}"
     else
@@ -26,6 +26,6 @@ wait_and_lock () {
 }
 
 release_lock () {
-  local folder="${1}.lock"
-  rm -f "${folder}"
+  local file="${1}.lock"
+  rm -f "${file}"
 }
