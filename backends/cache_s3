@@ -24,13 +24,19 @@ verbose() {
 restore_cache() {
   local from="$1"
   local to="$2"
-  aws s3 sync "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${from}")" "${to}" "$(verbose)"
+  # We want word-splitting here, to provide zero-to-one options to aws CLI
+  # See https://www.shellcheck.net/wiki/SC2046#exceptions
+  # shellcheck disable=SC2046
+  aws s3 sync "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${from}")" "${to}" $(verbose)
 }
 
 save_cache() {
   local to="$1"
   local from="$2"
-  aws s3 sync "${from}" "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${to}")" "$(verbose)"
+  # We want word-splitting here, to provide zero-to-one options to aws CLI
+  # See https://www.shellcheck.net/wiki/SC2046#exceptions
+  # shellcheck disable=SC2046
+  aws s3 sync "${from}" "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${to}")" $(verbose)
 }
 
 exists_cache() {
