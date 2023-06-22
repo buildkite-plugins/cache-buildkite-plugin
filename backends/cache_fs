@@ -1,21 +1,40 @@
 #!/bin/bash
+set -euo pipefail
 
 CACHE_FOLDER="${BUILDKITE_PLUGIN_FS_CACHE_FOLDER:-/var/cache/buildkite}"
+
+DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
+
+# shellcheck source=lib/lock.bash
+. "${DIR}/../lib/lock.bash"
 
 restore_cache() {
   local from="${CACHE_FOLDER}/$1"
   local to="$2"
+
+  wait_and_lock "${from}"
+  # shellcheck disable=2064  # actually want variable interpolated here
+  trap "release_lock_folder '${from}'" SIGINT SIGTERM SIGQUIT
+
   cp -a "$from" "$to"
+
+  release_lock "${from}"
 }
 
 save_cache() {
   local to="${CACHE_FOLDER}/$1"
   local from="$2"
 
+  wait_and_lock "${to}"
+  # shellcheck disable=2064  # actually want variable interpolated here
+  trap "release_lock '${to}'" SIGINT SIGTERM SIGQUIT
+
   if [ -n "$1" ] && [ -e "$to" ]; then
     rm -rf "$to"
   fi
   cp -a "$from" "$to"
+
+  release_lock "${to}"
 }
 
 exists_cache() {
