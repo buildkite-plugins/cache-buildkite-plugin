@@ -62,6 +62,14 @@ You also need the agent to have access to the following defined environment vari
 
 Setting the `BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS` environment variable will reduce logging of file operations towards S3.
 
+### `compression` (string, optional)
+
+Allows for the cached file/folder to be saved/restored as a single file. You will need to make sure to use the same compression when saving and restoring or it will cause a cache miss.
+
+Assuming the underlying executables are available, the allowed values are:
+* `tgz`: `tar` with gzip compression
+* `zip`: `(un)zip` compression
+
 ### `manifest` (string, required if using `file` caching level)
 
 A path to a file or folder that will be hashed to create file-level caches.

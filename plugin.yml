@@ -6,9 +6,15 @@ configuration:
   properties:
     backend:
       type: string
-    path:
+    compression:
       type: string
+      enum:
+        - zip
+        - tar
+        - tgz
     manifest:
+      type: string
+    path:
       type: string
     restore:
       type: string

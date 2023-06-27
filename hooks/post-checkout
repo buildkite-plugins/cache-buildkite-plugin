@@ -22,7 +22,23 @@ elif [ "${MAX_LEVEL}" = 'file' ] && [ -z "$(plugin_read_config MANIFEST)" ]; the
   exit 1
 fi
 
-build_key "${MAX_LEVEL}" "${RESTORE_PATH}" # to validate the level
+COMPRESS=$(plugin_read_config COMPRESSION 'none')
+if ! validate_compression "${COMPRESS}"; then
+  echo "+++ 🚨 Invalid value for compression option"
+  exit 1
+fi
+
+build_key "${MAX_LEVEL}" "${RESTORE_PATH}" >/dev/null # to validate the level
+
+ACTUAL_PATH=$(mktemp)
+
+if [ "${COMPRESS}" = 'tgz' ]; then
+  UNCOMPRESS_COMMAND=(tar xzf)
+elif [ "${COMPRESS}" = 'zip' ]; then
+  UNCOMPRESS_COMMAND=(unzip)
+else
+  ACTUAL_PATH="${RESTORE_PATH}"
+fi
 
 SORTED_LEVELS=(file step branch pipeline all)
 
@@ -31,10 +47,16 @@ for CURRENT_LEVEL in "${SORTED_LEVELS[@]}"; do
     continue
   fi
 
-  KEY=$(build_key "${CURRENT_LEVEL}" "${RESTORE_PATH}")
+  KEY=$(build_key "${CURRENT_LEVEL}" "${RESTORE_PATH}" "${COMPRESS}")
   if backend_exec exists "${KEY}"; then
     echo "Cache hit at ${CURRENT_LEVEL} level, restoring ${RESTORE_PATH}..."
-    backend_exec get "${KEY}" "${RESTORE_PATH}"
+    backend_exec get "${KEY}" "${ACTUAL_PATH}"
+
+    if [ "${COMPRESS}" != 'none' ]; then
+      echo "Cache is compressed, uncompressing..."
+      "${UNCOMPRESS_COMMAND[@]}" "${ACTUAL_PATH}" "${RESTORE_PATH}"
+    fi
+
     exit 0
   elif [ "${CURRENT_LEVEL}" = "${MAX_LEVEL}" ]; then
     echo "Cache miss up to ${CURRENT_LEVEL}-level, sorry"

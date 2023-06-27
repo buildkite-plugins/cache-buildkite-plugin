@@ -135,3 +135,38 @@ teardown() {
   rm -rf test.folder
   rm -rf FOLDER
 }
+
+@test 'build_key with compression changes' {
+  run build_key file FOLDER
+
+  assert_success
+  EMPTY_KEY="${output}"
+
+  run build_key file FOLDER ''
+  assert_success
+  assert_output "${EMPTY_KEY}"
+
+  run build_key file FOLDER something
+
+  assert_success
+  GENERATED_KEY="${output}"
+
+  run build_key file FOLDER another_thing
+  assert_success
+  refute_output "${GENERATED_KEY}"
+}
+
+@test 'validate_compression works' {
+  run validate_compression none
+
+  assert_success
+
+  run validate_compression tgz
+  assert_success
+
+  run validate_compression zip
+  assert_success
+
+  run validate_compression invalid
+  assert_failure
+}

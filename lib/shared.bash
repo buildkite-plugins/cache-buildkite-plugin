@@ -36,7 +36,7 @@ hash_files() {
 build_key() {
   local LEVEL="$1"
   local CACHE_PATH="$2"
-  local BASE
+  local COMPRESSION="${3:-}"
 
   if [ "${LEVEL}" = 'file' ]; then
     BASE="$(hash_files "$(plugin_read_config MANIFEST)")"
@@ -53,7 +53,7 @@ build_key() {
     exit 1
   fi
 
-  echo "cache-${LEVEL}-${BASE}-${CACHE_PATH}" | "$(sha)" | cut -d\  -f1
+  echo "cache-${LEVEL}-${BASE}-${CACHE_PATH}-${COMPRESSION}" | "$(sha)" | cut -d\  -f1
 }
 
 backend_exec() {
@@ -61,4 +61,17 @@ backend_exec() {
   BACKEND_NAME=$(plugin_read_config BACKEND 'fs')
 
   PATH="${PATH}:${DIR}/../backends" "cache_${BACKEND_NAME}" "$@"
+}
+
+validate_compression() {
+  local COMPRESSION="$1"
+
+  VALID_COMPRESSIONS=(none tgz zip)
+  for VALID in "${VALID_COMPRESSIONS[@]}"; do
+    if [ "${COMPRESSION}" = "${VALID}" ]; then
+      return 0
+    fi
+  done
+
+  return 1
 }
