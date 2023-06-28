@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
 # To debug stubs, uncomment these lines:
-# export AWS_STUB_DEBUG=/dev/tty
+export AWS_STUB_DEBUG=/dev/tty
 
 setup() {
   load "${BATS_PLUGIN_PATH}/load.bash"
@@ -61,10 +61,10 @@ setup() {
 @test 'Verbose flag passed when environment is set' {
   export BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS=1
   stub aws \
-    's3 sync --only-show-errors \* \* : echo ' \
-    's3 sync --only-show-errors \* \* : echo ' \
-    's3 sync \* \* "" : echo ' \
-    's3 sync \* \* "" : echo '
+    's3 sync \* \* --only-show-errors : echo ' \
+    's3 sync \* \* --only-show-errors : echo ' \
+    's3 sync \* \* : echo ' \
+    's3 sync \* \* : echo '
 
   run "${PWD}/backends/cache_s3" save from to
 
