@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
 # To debug stubs, uncomment these lines:
-export AWS_STUB_DEBUG=/dev/tty
+# export AWS_STUB_DEBUG=/dev/tty
 
 setup() {
   load "${BATS_PLUGIN_PATH}/load.bash"
