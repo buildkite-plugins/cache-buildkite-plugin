@@ -22,10 +22,6 @@ s3_sync() {
     aws_cmd+=(--only-show-errors)
   fi
 
-  # echo "Symbol: ${aws_cmd[*]}"
-  # echo "From: ${from}"
-  # echo "To: ${to}"
-
   "${aws_cmd[@]}" "${from}" "${to}"
 }
 
