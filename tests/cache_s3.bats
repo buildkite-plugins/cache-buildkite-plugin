@@ -61,8 +61,8 @@ setup() {
 @test 'Verbose flag passed when environment is set' {
   export BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS=1
   stub aws \
-    's3 sync \* \* --only-show-errors : echo ' \
-    's3 sync \* \* --only-show-errors : echo ' \
+    's3 sync --only-show-errors \* \* : echo ' \
+    's3 sync --only-show-errors \* \* : echo ' \
     's3 sync \* \* "" : echo ' \
     's3 sync \* \* "" : echo '
 
