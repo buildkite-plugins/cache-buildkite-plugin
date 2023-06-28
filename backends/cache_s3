@@ -17,12 +17,16 @@ s3_sync() {
   local from="$1"
   local to="$2"
 
-  verbose=()
+  aws_cmd=(aws s3 sync)
   if [ -n "${BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS}" ]; then
-    verbose+=(--only-show-errors)
+    aws_cmd+=(--only-show-errors)
   fi
 
-  aws s3 sync "${from}" "${to}" $verbose
+  # echo "Symbol: ${aws_cmd[*]}"
+  # echo "From: ${from}"
+  # echo "To: ${to}"
+
+  "${aws_cmd[@]}" "${from}" "${to}"
 }
 
 restore_cache() {
