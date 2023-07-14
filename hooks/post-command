@@ -38,8 +38,8 @@ fi
 
 if [ "${COMPRESS}" != 'none' ]; then
   echo "Compressing ${CACHE_PATH} with ${COMPRESS}..."
-  ACTUAL_PATH=$(mktemp)
-  "${COMPRESS_COMMAND[@]}" "${ACTUAL_PATH}" "${CACHE_PATH}"
+  ACTUAL_PATH=$(mktemp -d)
+  "${COMPRESS_COMMAND[@]}" "${ACTUAL_PATH}/${KEY}.tgz" "${CACHE_PATH}"
 else
   ACTUAL_PATH="${CACHE_PATH}"
 fi

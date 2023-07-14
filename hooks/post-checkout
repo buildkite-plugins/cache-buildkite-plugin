@@ -30,7 +30,7 @@ fi
 
 build_key "${MAX_LEVEL}" "${RESTORE_PATH}" >/dev/null # to validate the level
 
-ACTUAL_PATH=$(mktemp)
+ACTUAL_PATH=$(mktemp -d)
 
 if [ "${COMPRESS}" = 'tgz' ]; then
   UNCOMPRESS_COMMAND=(tar xzf)
@@ -50,11 +50,11 @@ for CURRENT_LEVEL in "${SORTED_LEVELS[@]}"; do
   KEY=$(build_key "${CURRENT_LEVEL}" "${RESTORE_PATH}" "${COMPRESS}")
   if backend_exec exists "${KEY}"; then
     echo "Cache hit at ${CURRENT_LEVEL} level, restoring ${RESTORE_PATH}..."
-    backend_exec get "${KEY}" "${ACTUAL_PATH}"
+    backend_exec get "${KEY}" "${ACTUAL_PATH}/${KEY}.tgz"
 
     if [ "${COMPRESS}" != 'none' ]; then
       echo "Cache is compressed, uncompressing..."
-      "${UNCOMPRESS_COMMAND[@]}" "${ACTUAL_PATH}" "${RESTORE_PATH}"
+      "${UNCOMPRESS_COMMAND[@]}" "${ACTUAL_PATH}/${KEY}.tgz" "${RESTORE_PATH}"
     fi
 
     exit 0
