@@ -50,11 +50,11 @@ for CURRENT_LEVEL in "${SORTED_LEVELS[@]}"; do
   KEY=$(build_key "${CURRENT_LEVEL}" "${RESTORE_PATH}" "${COMPRESS}")
   if backend_exec exists "${KEY}"; then
     echo "Cache hit at ${CURRENT_LEVEL} level, restoring ${RESTORE_PATH}..."
-    backend_exec get "${KEY}" "${ACTUAL_PATH}/${KEY}.tgz"
+    backend_exec get "${KEY}" "${ACTUAL_PATH}"
 
     if [ "${COMPRESS}" != 'none' ]; then
       echo "Cache is compressed, uncompressing..."
-      "${UNCOMPRESS_COMMAND[@]}" "${ACTUAL_PATH}/${KEY}.tgz" "${RESTORE_PATH}"
+      "${UNCOMPRESS_COMMAND[@]}" "${ACTUAL_PATH}/archive.tgz" "${RESTORE_PATH}"
     fi
 
     exit 0
