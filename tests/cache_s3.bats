@@ -91,6 +91,52 @@ setup() {
   unstub aws
 }
 
+@test 'Endpoint URL flag passed when environment is set' {
+  export BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT=https://s3.somewhere.com
+
+  stub aws \
+    's3 sync --endpoint-url https://s3.somewhere.com \* \* : echo ' \
+    's3 sync --endpoint-url https://s3.somewhere.com \* \* : echo ' \
+    's3api list-objects-v2 --bucket \* --prefix \* --max-items 1 --endpoint-url https://s3.somewhere.com : echo exists' \
+    's3 sync \* \* : echo ' \
+    's3 sync \* \* : echo ' \
+    's3api list-objects-v2 --bucket \* --prefix \* --max-items 1 : echo exists'
+
+  run "${PWD}/backends/cache_s3" save from to
+
+  assert_success
+  assert_output ''
+
+  run "${PWD}/backends/cache_s3" get from to
+
+  assert_success
+  assert_output ''
+
+  run "${PWD}/backends/cache_s3" exists to
+
+  assert_success
+  assert_output ''
+
+  unset BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT
+
+  run "${PWD}/backends/cache_s3" save from to
+
+  assert_success
+  assert_output ''
+
+  run "${PWD}/backends/cache_s3" get from to
+
+  assert_success
+  assert_output ''
+
+  run "${PWD}/backends/cache_s3" exists to
+
+  assert_success
+  assert_output ''
+
+  unstub aws
+}
+
 @test 'File exists and can be restored after save' {
   touch "${BATS_TEST_TMPDIR}/new-file"
   mkdir "${BATS_TEST_TMPDIR}/s3-cache"

@@ -18,11 +18,28 @@ s3_sync() {
   local to="$2"
 
   aws_cmd=(aws s3 sync)
+
   if [ -n "${BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS}" ]; then
     aws_cmd+=(--only-show-errors)
   fi
 
+  if [ -n "${BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT}" ]; then
+    aws_cmd+=(--endpoint-url "${BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT}")
+  fi
+
   "${aws_cmd[@]}" "${from}" "${to}"
+}
+
+s3_listobjects() {
+  local prefix="$1"
+
+  aws_cmd=(aws s3api list-objects-v2 --bucket "${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}" --prefix "$(build_key "${prefix}")" --max-items 1)
+
+  if [ -n "${BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT}" ]; then
+    aws_cmd+=(--endpoint-url "${BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT}")
+  fi
+
+  "${aws_cmd[@]}"
 }
 
 restore_cache() {
@@ -39,7 +56,7 @@ save_cache() {
 
 exists_cache() {
   if [ -z "$1" ]; then exit 1; fi
-  [ -n "$(aws s3api list-objects-v2 --bucket "${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}" --prefix "$(build_key "$1")" --max-items 1)" ]
+  [ -n "$(s3_listobjects "$1")" ]
 }
 
 OPCODE="$1"

@@ -48,7 +48,7 @@ Defines how the cache is stored and restored. Can be any string (see [Customizab
 
 Very basic local filesystem backend.
 
-The `BUILDKITE_PLUGIN_FS_CACHE_FOLDER` environment variable defines where the copies are  (default: `/var/cache/buildkite`). If you don't change it, you will need to make sure that the folder exists and `buildkite-agent` has the propper permissions, otherwise the plugin will fail. 
+The `BUILDKITE_PLUGIN_FS_CACHE_FOLDER` environment variable defines where the copies are  (default: `/var/cache/buildkite`). If you don't change it, you will need to make sure that the folder exists and `buildkite-agent` has the propper permissions, otherwise the plugin will fail.
 
 **IMPORTANT**: the `fs` backend just copies files to a different location in the current agent, as it is not a shared or external resource, its caching possibilities are quite limited.
 
@@ -59,6 +59,7 @@ Store things in an S3 bucket. You need to make sure that the `aws` command is av
 You also need the agent to have access to the following defined environment variables:
 * `BUILDKITE_PLUGIN_S3_CACHE_BUCKET`: the bucket to use (backend will fail if not defined)
 * `BUILDKITE_PLUGIN_S3_CACHE_PREFIX`: optional prefix to use for the cache within the bucket
+* `BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT`: optional S3 custom endpoint to use
 
 Setting the `BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS` environment variable will reduce logging of file operations towards S3.
 
@@ -91,7 +92,7 @@ When restoring from cache, **all levels, in the described order, up to the one s
 
 One of the greatest flexibilities of this plugin is its flexible backend architecture. You can provide whatever value you want for the `backend` option of this plugin (`X` for example) as long as there is an executable script accessible to the agent named `cache_X` that respects the following execution protocol:
 
-* `cache_X exists $KEY` 
+* `cache_X exists $KEY`
 
 Should exit successfully (0 return code) if any previous call to this very same plugin was made with `cache_x save $KEY`. Any other exit code will mean that there is no valid cache and will be ignored.
 
@@ -122,7 +123,7 @@ You can always have more complicated logic by using the plugin multiple times wi
 ```yaml
 steps:
   - label: ':nodejs: Install dependencies'
-    command: npm ci 
+    command: npm ci
     plugins:
       - cache#v0.5.0:
           manifest: package-lock.json
