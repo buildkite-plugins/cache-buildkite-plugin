@@ -27,6 +27,7 @@ restore_cache() {
   local cachefile=cache.tar.gz
   aws s3 cp "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${from}")" "${cachefile}" "$(verbose)"
   if [ -e "${cachefile}" ]; then
+    mkdir -p "$(dirname "${to}")"
     tar xzf "${cachefile}" -C "$(dirname "${to}")"
     rm "${cachefile}"
   fi
