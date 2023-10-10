@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 if [ -z "${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}" ]; then
   echo '+++ 🚨 Missing S3 bucket configuration'
