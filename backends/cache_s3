@@ -13,11 +13,18 @@ build_key() {
   fi
 }
 
-s3_sync() {
+s3_cmd() {
   local from="$1"
   local to="$2"
+  local use_sync="${3:-1}"
 
-  aws_cmd=(aws s3 sync)
+  aws_cmd=(aws s3)
+
+  if [ "${use_sync}" = 'true' ]; then
+    aws_cmd+=(sync)
+  else
+    aws_cmd+=(cp --recursive)
+  fi
 
   if [ -n "${BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS}" ]; then
     aws_cmd+=(--only-show-errors)
@@ -45,13 +52,20 @@ s3_listobjects() {
 restore_cache() {
   local from="$1"
   local to="$2"
-  s3_sync "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${from}")" "${to}"
+
+  # can not use sync as it may be a single file
+  s3_cmd "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${from}")" "${to}" 'false'
 }
 
 save_cache() {
   local to="$1"
   local from="$2"
-  s3_sync "${from}" "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${to}")"
+  local use_sync='true'
+  if [ -f "${from}" ]; then
+    use_sync='false'
+  fi
+
+  s3_cmd "${from}" "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${to}")"
 }
 
 exists_cache() {
