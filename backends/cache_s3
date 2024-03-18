@@ -33,13 +33,14 @@ s3_sync() {
 s3_listobjects() {
   local prefix="$1"
 
-  aws_cmd=(aws s3api list-objects-v2 --bucket "${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}" --prefix "$(build_key "${prefix}")" --max-items 1)
+  aws_cmd=(aws s3api list-objects-v2 --bucket "${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}" --prefix "$(build_key "${prefix}")" --max-items 1 --query Contents)
 
   if [ -n "${BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT}" ]; then
     aws_cmd+=(--endpoint-url "${BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT}")
   fi
 
-  "${aws_cmd[@]}"
+  result=$("${aws_cmd[@]}")
+  [ "${result}" != 'null' ]
 }
 
 restore_cache() {
@@ -56,7 +57,7 @@ save_cache() {
 
 exists_cache() {
   if [ -z "$1" ]; then exit 1; fi
-  [ -n "$(s3_listobjects "$1")" ]
+  s3_listobjects "$1"
 }
 
 OPCODE="$1"
