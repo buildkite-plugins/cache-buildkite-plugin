@@ -37,7 +37,7 @@ setup() {
 }
 
 @test 'Exists on non-existing file fails' {
-  stub aws 'exit 1'
+  stub aws 'echo null'
 
   run "${PWD}/backends/cache_s3" exists PATH/THAT/DOES/NOT/EXIST
 
@@ -97,10 +97,10 @@ setup() {
   stub aws \
     's3 cp --recursive --endpoint-url https://s3.somewhere.com \* \* : echo ' \
     's3 cp --recursive --endpoint-url https://s3.somewhere.com \* \* : echo ' \
-    's3api list-objects-v2 --bucket \* --prefix \* --max-items 1 --endpoint-url https://s3.somewhere.com : echo exists' \
+    's3api list-objects-v2 --bucket \* --prefix \* --max-items 1 --query Contents --endpoint-url https://s3.somewhere.com : echo exists' \
     's3 cp --recursive \* \* : echo ' \
     's3 cp --recursive \* \* : echo ' \
-    's3api list-objects-v2 --bucket \* --prefix \* --max-items 1 : echo exists'
+    's3api list-objects-v2 --bucket \* --prefix \* --max-items 1 --query Contents : echo exists'
 
   run "${PWD}/backends/cache_s3" save from to
 
@@ -141,7 +141,7 @@ setup() {
   touch "${BATS_TEST_TMPDIR}/new-file"
   mkdir "${BATS_TEST_TMPDIR}/s3-cache"
   stub aws \
-    "echo" \
+    "echo null" \
     "ln -s \$4 $BATS_TEST_TMPDIR/s3-cache/\$(echo \$5 | md5sum | cut -c-32)" \
     "echo 'exists'" \
     "cp -r $BATS_TEST_TMPDIR/s3-cache/\$(echo \$4 | md5sum | cut -c-32) \$5"
@@ -179,7 +179,7 @@ setup() {
   echo 'random content' > "${BATS_TEST_TMPDIR}/new-folder/new-file"
 
   stub aws \
-    "echo" \
+    "echo null" \
     "ln -s \$4 $BATS_TEST_TMPDIR/s3-cache/\$(echo \$5 | md5sum | cut -c-32)" \
     "echo 'exists'" \
     "cp -r $BATS_TEST_TMPDIR/s3-cache/\$(echo \$4 | md5sum | cut -c-32) \$5"
