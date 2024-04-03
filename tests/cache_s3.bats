@@ -61,15 +61,15 @@ setup() {
 @test 'Verbose flag passed when environment is set' {
   export BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS=1
   stub aws \
-    's3 sync --only-show-errors \* \* : echo ' \
-    's3 sync --only-show-errors \* \* : echo ' \
-    's3 sync \* \* : echo ' \
-    's3 sync \* \* : echo '
+    's3 cp --recursive --only-show-errors \* \* : echo ' \
+    's3 cp --recursive --only-show-errors \* \* : echo ' \
+    's3 cp --recursive \* \* : echo ' \
+    's3 cp --recursive \* \* : echo '
 
   run "${PWD}/backends/cache_s3" save from to
 
-    assert_success
-    assert_output ''
+  assert_success
+  assert_output ''
 
   run "${PWD}/backends/cache_s3" get from to
 
@@ -95,11 +95,11 @@ setup() {
   export BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT=https://s3.somewhere.com
 
   stub aws \
-    's3 sync --endpoint-url https://s3.somewhere.com \* \* : echo ' \
-    's3 sync --endpoint-url https://s3.somewhere.com \* \* : echo ' \
-    's3api list-objects-v2 --bucket \* --prefix \* --max-items 1  --query Contents --endpoint-url https://s3.somewhere.com : echo exists' \
-    's3 sync \* \* : echo ' \
-    's3 sync \* \* : echo ' \
+    's3 cp --recursive --endpoint-url https://s3.somewhere.com \* \* : echo ' \
+    's3 cp --recursive --endpoint-url https://s3.somewhere.com \* \* : echo ' \
+    's3api list-objects-v2 --bucket \* --prefix \* --max-items 1 --query Contents --endpoint-url https://s3.somewhere.com : echo exists' \
+    's3 cp --recursive \* \* : echo ' \
+    's3 cp --recursive \* \* : echo ' \
     's3api list-objects-v2 --bucket \* --prefix \* --max-items 1 --query Contents : echo exists'
 
   run "${PWD}/backends/cache_s3" save from to
@@ -142,9 +142,9 @@ setup() {
   mkdir "${BATS_TEST_TMPDIR}/s3-cache"
   stub aws \
     "echo null" \
-    "ln -s \$3 $BATS_TEST_TMPDIR/s3-cache/\$(echo \$4 | md5sum | cut -c-32)" \
+    "ln -s \$4 $BATS_TEST_TMPDIR/s3-cache/\$(echo \$5 | md5sum | cut -c-32)" \
     "echo 'exists'" \
-    "cp -r $BATS_TEST_TMPDIR/s3-cache/\$(echo \$3 | md5sum | cut -c-32) \$4"
+    "cp -r $BATS_TEST_TMPDIR/s3-cache/\$(echo \$4 | md5sum | cut -c-32) \$5"
 
   run "${PWD}/backends/cache_s3" exists new-file
 
@@ -180,9 +180,9 @@ setup() {
 
   stub aws \
     "echo null" \
-    "ln -s \$3 $BATS_TEST_TMPDIR/s3-cache/\$(echo \$4 | md5sum | cut -c-32)" \
+    "ln -s \$4 $BATS_TEST_TMPDIR/s3-cache/\$(echo \$5 | md5sum | cut -c-32)" \
     "echo 'exists'" \
-    "cp -r $BATS_TEST_TMPDIR/s3-cache/\$(echo \$3 | md5sum | cut -c-32) \$4"
+    "cp -r $BATS_TEST_TMPDIR/s3-cache/\$(echo \$4 | md5sum | cut -c-32) \$5"
 
   run "${PWD}/backends/cache_s3" exists new-folder
 
