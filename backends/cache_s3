@@ -16,14 +16,14 @@ build_key() {
 s3_cmd() {
   local from="$1"
   local to="$2"
-  local use_sync="${3:-1}"
+  local use_sync="${3:-true}"
 
   aws_cmd=(aws s3)
 
   if [ "${use_sync}" = 'true' ]; then
     aws_cmd+=(sync)
   else
-    aws_cmd+=(cp --recursive)
+    aws_cmd+=(cp)
   fi
 
   if [ -n "${BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS}" ]; then
@@ -55,7 +55,7 @@ restore_cache() {
   local to="$2"
 
   # can not use sync as it may be a single file
-  s3_cmd "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${from}")" "${to}" 'false'
+  s3_cmd "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${from}")" "${to}"
 }
 
 save_cache() {
@@ -66,7 +66,7 @@ save_cache() {
     use_sync='false'
   fi
 
-  s3_cmd "${from}" "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${to}")"
+  s3_cmd "${from}" "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${to}")" "${use_sync}"
 }
 
 exists_cache() {
