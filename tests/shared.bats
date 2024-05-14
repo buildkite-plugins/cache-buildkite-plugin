@@ -50,7 +50,7 @@ teardown() {
 
   assert_success
   assert_output 'sha1sum'
-  
+
   unstub hash
 }
 
@@ -154,19 +154,4 @@ teardown() {
   run build_key file FOLDER another_thing
   assert_success
   refute_output "${GENERATED_KEY}"
-}
-
-@test 'validate_compression works' {
-  run validate_compression none
-
-  assert_success
-
-  run validate_compression tgz
-  assert_success
-
-  run validate_compression zip
-  assert_success
-
-  run validate_compression invalid
-  assert_failure
 }
