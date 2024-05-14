@@ -24,7 +24,7 @@ setup() {
 
   # stub is the same for all tests
   stub unzip \
-    "\* \* : echo uncompressed \$2 into \$3"
+    "-o \* \* : echo uncompressed \$3 into \$4"
 }
 
 teardown() {

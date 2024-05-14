@@ -57,6 +57,6 @@ uncompress() {
   elif [ "${COMPRESSION}" = 'zip' ]; then
     # because ZIP complains if the file does not end with .zip
     mv "${FILE}" "${FILE}.zip"
-    unzip "${FILE}.zip"
+    unzip -o "${FILE}.zip"
   fi
 }
