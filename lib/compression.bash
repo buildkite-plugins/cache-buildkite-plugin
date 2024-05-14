@@ -32,17 +32,15 @@ compress() {
   local COMPRESSION=''
   COMPRESSION="$(plugin_read_config COMPRESSION 'none')"
 
-  if [ "${COMPRESSION}" = 'tgz' ]; then
-    COMPRESS_COMMAND=(tar czf "${FILE}" "${COMPRESSED_FILE}")
-  elif [ "${COMPRESSION}" = 'zip' ]; then
-    COMPRESS_COMMAND=(zip -r "${FILE}" "${COMPRESSED_FILE}")
-  else
-    echo 'uncompress should not be called when compression is not setup'
-    exit 1
-  fi
-
   echo "Compressing ${COMPRESSED_FILE} with ${COMPRESSION}..."
-  "${COMPRESS_COMMAND[@]}"
+
+  if [ "${COMPRESSION}" = 'tgz' ]; then
+    tar czf "${FILE}" "${COMPRESSED_FILE}"
+  elif [ "${COMPRESSION}" = 'zip' ]; then
+    # because ZIP complains if the file does not end with .zip
+    zip -r "${FILE}.zip" "${COMPRESSED_FILE}"
+    mv "${FILE}.zip" "${FILE}"
+  fi
 }
 
 uncompress() {
@@ -52,15 +50,13 @@ uncompress() {
   local COMPRESSION=''
   COMPRESSION="$(plugin_read_config COMPRESSION 'none')"
 
-  if [ "${COMPRESSION}" = 'tgz' ]; then
-    UNCOMPRESS_COMMAND=(tar xzf "${FILE}")
-  elif [ "${COMPRESSION}" = 'zip' ]; then
-    UNCOMPRESS_COMMAND=(unzip "${FILE}")
-  else
-    echo 'uncompress should not be called when compression is not setup'
-    exit 1
-  fi
+  echo "Cache is compressed, uncompressing with ${COMPRESSION}..."
 
-  echo 'Cache is compressed, uncompressing...'
-  "${UNCOMPRESS_COMMAND[@]}"
+  if [ "${COMPRESSION}" = 'tgz' ]; then
+    tar xzf "${FILE}"
+  elif [ "${COMPRESSION}" = 'zip' ]; then
+    # because ZIP complains if the file does not end with .zip
+    mv "${FILE}" "${FILE}.zip"
+    unzip "${FILE}.zip"
+  fi
 }
