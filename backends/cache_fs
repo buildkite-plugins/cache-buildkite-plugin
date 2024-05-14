@@ -4,7 +4,8 @@ set -euo pipefail
 CACHE_FOLDER="${BUILDKITE_PLUGIN_FS_CACHE_FOLDER:-/var/cache/buildkite}"
 
 if ! [ -d "${CACHE_FOLDER}" ]; then
-  echo "Cache folder '${CACHE_FOLDER}' does not exist"
+  echo "Cache folder ${CACHE_FOLDER} does not exist"
+  echo 'Is the BUILDKITE_PLUGIN_FS_CACHE_FOLDER variable setup correctly?'
   exit 1
 fi
 
