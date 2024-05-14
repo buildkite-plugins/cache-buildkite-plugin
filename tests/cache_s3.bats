@@ -62,8 +62,10 @@ setup() {
   export BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS=1
   stub aws \
     's3 sync --only-show-errors \* \* : echo ' \
+    's3api head-object --bucket \* --key \* : false ' \
     's3 sync --only-show-errors \* \* : echo ' \
     's3 sync \* \* : echo ' \
+    's3api head-object --bucket \* --key \* : false ' \
     's3 sync \* \* : echo '
 
   run "${PWD}/backends/cache_s3" save from to
@@ -95,10 +97,12 @@ setup() {
   export BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT=https://s3.somewhere.com
 
   stub aws \
-    's3 sync --endpoint-url https://s3.somewhere.com \* \* : echo ' \
-    's3 sync --endpoint-url https://s3.somewhere.com \* \* : echo ' \
-    's3api list-objects-v2 --bucket \* --prefix \* --max-items 1 --query Contents --endpoint-url https://s3.somewhere.com : echo exists' \
+    '--endpoint-url https://s3.somewhere.com s3 sync \* \* : echo ' \
+    '--endpoint-url https://s3.somewhere.com s3api head-object --bucket \* --key \* : false ' \
+    '--endpoint-url https://s3.somewhere.com s3 sync \* \* : echo ' \
+    '--endpoint-url https://s3.somewhere.com s3api list-objects-v2 --bucket \* --prefix \* --max-items 1 --query Contents : echo exists' \
     's3 sync \* \* : echo ' \
+    's3api head-object --bucket \* --key \* : false ' \
     's3 sync \* \* : echo ' \
     's3api list-objects-v2 --bucket \* --prefix \* --max-items 1 --query Contents : echo exists'
 
@@ -144,7 +148,8 @@ setup() {
     "echo null" \
     "s3 cp \* \* : ln -s \$3 $BATS_TEST_TMPDIR/s3-cache/\$(echo \$4 | md5sum | cut -c-32)" \
     "echo 'exists'" \
-    "s3 sync \* \* : cp -r $BATS_TEST_TMPDIR/s3-cache/\$(echo \$3 | md5sum | cut -c-32) \$4"
+    's3api head-object --bucket \* --key \* : true ' \
+    "s3 cp \* \* : cp -r $BATS_TEST_TMPDIR/s3-cache/\$(echo \$3 | md5sum | cut -c-32) \$4"
 
   run "${PWD}/backends/cache_s3" exists new-file
 
@@ -182,6 +187,7 @@ setup() {
     "echo null" \
     "s3 sync \* \* : ln -s \$3 $BATS_TEST_TMPDIR/s3-cache/\$(echo \$4 | md5sum | cut -c-32)" \
     "echo 'exists'" \
+    's3api head-object --bucket \* --key \* : false ' \
     "s3 sync \* \* : cp -r $BATS_TEST_TMPDIR/s3-cache/\$(echo \$3 | md5sum | cut -c-32) \$4"
 
   run "${PWD}/backends/cache_s3" exists new-folder
