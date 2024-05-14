@@ -5,6 +5,8 @@ DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
 
 # shellcheck source=lib/shared.bash
 . "${DIR}/../lib/shared.bash"
+# shellcheck source=lib/compression.bash
+. "${DIR}/../lib/compression.bash"
 
 CACHE_PATH=$(plugin_read_config PATH)
 
@@ -22,24 +24,16 @@ elif [ "${LEVEL}" = 'file' ] && [ -z "$(plugin_read_config MANIFEST)" ]; then
   exit 1
 fi
 
-COMPRESS=$(plugin_read_config COMPRESSION 'none')
-if ! validate_compression "${COMPRESS}"; then
+if ! validate_compression; then
   echo "+++ 🚨 Invalid value for compression option"
   exit 1
 fi
 
 KEY=$(build_key "${LEVEL}" "${CACHE_PATH}" "${COMPRESS}")
 
-if [ "${COMPRESS}" = 'tgz' ]; then
-  COMPRESS_COMMAND=(tar czf)
-elif [ "${COMPRESS}" = 'zip' ]; then
-  COMPRESS_COMMAND=(zip)
-fi
-
-if [ "${COMPRESS}" != 'none' ]; then
-  echo "Compressing ${CACHE_PATH} with ${COMPRESS}..."
+if compression_active; then
   ACTUAL_PATH=$(mktemp)
-  "${COMPRESS_COMMAND[@]}" "${ACTUAL_PATH}" "${CACHE_PATH}"
+  compress "${CACHE_PATH}" "${ACTUAL_PATH}"
 else
   ACTUAL_PATH="${CACHE_PATH}"
 fi
