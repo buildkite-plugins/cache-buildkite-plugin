@@ -26,22 +26,22 @@ compression_active() {
 }
 
 compress() {
-  local PATH="$1"
+  local COMPRESSED_FILE="$1"
   local FILE="$2"
 
   local COMPRESSION=''
   COMPRESSION="$(plugin_read_config COMPRESSION 'none')"
 
   if [ "${COMPRESSION}" = 'tgz' ]; then
-    COMPRESS_COMMAND=(tar czf "${FILE}" "${PATH}")
+    COMPRESS_COMMAND=(tar czf "${FILE}" "${COMPRESSED_FILE}")
   elif [ "${COMPRESSION}" = 'zip' ]; then
-    COMPRESS_COMMAND=(zip -r "${FILE}" "${PATH}")
+    COMPRESS_COMMAND=(zip -r "${FILE}" "${COMPRESSED_FILE}")
   else
     echo 'uncompress should not be called when compression is not setup'
     exit 1
   fi
 
-  echo "Compressing ${PATH} with ${COMPRESSION}..."
+  echo "Compressing ${COMPRESSED_FILE} with ${COMPRESSION}..."
   "${COMPRESS_COMMAND[@]}"
 }
 
