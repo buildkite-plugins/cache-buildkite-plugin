@@ -6,8 +6,7 @@ DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
 . "${DIR}/plugin.bash"
 
 validate_compression() {
-  local COMPRESSION=''
-  COMPRESSION="$(plugin_read_config COMPRESSION 'none')"
+  local COMPRESSION="$1"
 
   VALID_COMPRESSIONS=(none tgz zip)
   for VALID in "${VALID_COMPRESSIONS[@]}"; do
@@ -62,5 +61,6 @@ uncompress() {
     exit 1
   fi
 
+  echo 'Cache is compressed, uncompressing...'
   "${UNCOMPRESS_COMMAND[@]}"
 }
