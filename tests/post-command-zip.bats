@@ -26,7 +26,7 @@ setup() {
     "save \* \* : echo saving \$3 in \$2"
 
   stub zip \
-    "echo compressed \${@:2} into \$1"
+    "echo compressed \${@:3} into \$2"
 }
 
 teardown() {
