@@ -32,8 +32,6 @@ fi
 
 build_key "${MAX_LEVEL}" "${RESTORE_PATH}" >/dev/null # to validate the level
 
-TEMP_PATH=$(mktemp)
-
 SORTED_LEVELS=(file step branch pipeline all)
 
 for CURRENT_LEVEL in "${SORTED_LEVELS[@]}"; do
@@ -44,12 +42,13 @@ for CURRENT_LEVEL in "${SORTED_LEVELS[@]}"; do
   KEY=$(build_key "${CURRENT_LEVEL}" "${RESTORE_PATH}" "${COMPRESS}")
   if backend_exec exists "${KEY}"; then
     echo "Cache hit at ${CURRENT_LEVEL} level, restoring ${RESTORE_PATH}..."
-    backend_exec get "${KEY}" "${TEMP_PATH}"
 
     if compression_active; then
+      TEMP_PATH=$(mktemp)
+      backend_exec get "${KEY}" "${TEMP_PATH}"
       uncompress "${TEMP_PATH}" "${RESTORE_PATH}"
     else
-      mv "${TEMP_PATH}" "${RESTORE_PATH}"
+      backend_exec get "${KEY}" "${RESTORE_PATH}"
     fi
 
     exit 0
