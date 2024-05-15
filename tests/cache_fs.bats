@@ -6,7 +6,7 @@
 setup() {
   load "${BATS_PLUGIN_PATH}/load.bash"
 
-  export BUILDKITE_PLUGIN_FS_CACHE_FOLDER=/tmp/fs-test
+  export BUILDKITE_PLUGIN_FS_CACHE_FOLDER="/${BATS_TEST_TMPDIR}/fs-test"
   mkdir -p "${BUILDKITE_PLUGIN_FS_CACHE_FOLDER}"
   touch "${BUILDKITE_PLUGIN_FS_CACHE_FOLDER}/existing_file"
   mkdir "${BUILDKITE_PLUGIN_FS_CACHE_FOLDER}/existing_folder"
@@ -21,6 +21,16 @@ teardown() {
 
   assert_failure 255
   assert_output ''
+}
+
+@test "Backend fails if cache folder does not exist" {
+  export BUILDKITE_PLUGIN_FS_CACHE_FOLDER=/does/not/exist
+
+  run "${PWD}/backends/cache_fs" exists whatever
+
+  assert_failure 1
+  assert_output --partial 'Cache folder /does/not/exist does not exist'
+  assert_output --partial 'BUILDKITE_PLUGIN_FS_CACHE_FOLDER variable'
 }
 
 @test 'Exists on non-existing file fails' {
@@ -38,7 +48,7 @@ teardown() {
 }
 
 @test 'Exists on existing folder works' {
-  run "${PWD}/backends/cache_fs" exists existing_folder 
+  run "${PWD}/backends/cache_fs" exists existing_folder
 
   assert_success
   assert_output ''
@@ -48,7 +58,7 @@ teardown() {
   touch "${BATS_TEST_TMPDIR}/new-file"
 
   run "${PWD}/backends/cache_fs" exists new-file
-  
+
   assert_failure
   assert_output ''
 
@@ -74,7 +84,7 @@ teardown() {
   echo 'random content' > "${BATS_TEST_TMPDIR}/new-folder/new-file"
 
   run "${PWD}/backends/cache_fs" exists new-folder
-  
+
   assert_failure
   assert_output ''
 

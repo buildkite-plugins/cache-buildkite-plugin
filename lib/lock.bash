@@ -15,7 +15,7 @@ wait_and_lock () {
 
   for ATTEMPT in $(seq 1 "${max_attempts}"); do
     if ! lock "${1}"; then
-      echo 'Waiting for folder lock'
+      echo "Waiting for folder lock ${file}"
       sleep "${ATTEMPT}"
     else
       return 0
