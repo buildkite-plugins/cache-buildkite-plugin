@@ -5,6 +5,8 @@ DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
 
 # shellcheck source=lib/shared.bash
 . "${DIR}/../lib/shared.bash"
+# shellcheck source=lib/compression.bash
+. "${DIR}/../lib/compression.bash"
 
 RESTORE_PATH=$(plugin_read_config PATH)
 
@@ -30,16 +32,6 @@ fi
 
 build_key "${MAX_LEVEL}" "${RESTORE_PATH}" >/dev/null # to validate the level
 
-ACTUAL_PATH=$(mktemp)
-
-if [ "${COMPRESS}" = 'tgz' ]; then
-  UNCOMPRESS_COMMAND=(tar xzf)
-elif [ "${COMPRESS}" = 'zip' ]; then
-  UNCOMPRESS_COMMAND=(unzip)
-else
-  ACTUAL_PATH="${RESTORE_PATH}"
-fi
-
 SORTED_LEVELS=(file step branch pipeline all)
 
 for CURRENT_LEVEL in "${SORTED_LEVELS[@]}"; do
@@ -50,11 +42,13 @@ for CURRENT_LEVEL in "${SORTED_LEVELS[@]}"; do
   KEY=$(build_key "${CURRENT_LEVEL}" "${RESTORE_PATH}" "${COMPRESS}")
   if backend_exec exists "${KEY}"; then
     echo "Cache hit at ${CURRENT_LEVEL} level, restoring ${RESTORE_PATH}..."
-    backend_exec get "${KEY}" "${ACTUAL_PATH}"
 
-    if [ "${COMPRESS}" != 'none' ]; then
-      echo "Cache is compressed, uncompressing..."
-      "${UNCOMPRESS_COMMAND[@]}" "${ACTUAL_PATH}" "${RESTORE_PATH}"
+    if compression_active; then
+      TEMP_PATH=$(mktemp)
+      backend_exec get "${KEY}" "${TEMP_PATH}"
+      uncompress "${TEMP_PATH}" "${RESTORE_PATH}"
+    else
+      backend_exec get "${KEY}" "${RESTORE_PATH}"
     fi
 
     exit 0

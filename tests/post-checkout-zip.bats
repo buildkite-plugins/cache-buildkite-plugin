@@ -24,7 +24,7 @@ setup() {
 
   # stub is the same for all tests
   stub unzip \
-    "\* \* : echo uncompressed \$2 into \$3"
+    "-o \* \* : echo uncompressed \$3 into \$4"
 }
 
 teardown() {
@@ -44,7 +44,7 @@ teardown() {
 
   assert_success
   assert_output --partial 'Cache hit at file level'
-  assert_output --partial "Cache is compressed, uncompressing..."
+  assert_output --partial "Cache is compressed, uncompressing with zip"
 
   unstub cache_dummy
 }
@@ -60,7 +60,7 @@ teardown() {
 
   assert_success
   assert_output --partial 'Cache hit at file level'
-  assert_output --partial "Cache is compressed, uncompressing..."
+  assert_output --partial "Cache is compressed, uncompressing with zip"
 
   unstub cache_dummy
 }
@@ -77,7 +77,7 @@ teardown() {
 
   assert_success
   assert_output --partial 'Cache hit at step level'
-  assert_output --partial "Cache is compressed, uncompressing..."
+  assert_output --partial "Cache is compressed, uncompressing with zip"
 
   unstub cache_dummy
 }
@@ -95,7 +95,7 @@ teardown() {
 
   assert_success
   assert_output --partial 'Cache hit at branch level'
-  assert_output --partial "Cache is compressed, uncompressing..."
+  assert_output --partial "Cache is compressed, uncompressing with zip"
 
   unstub cache_dummy
 }
@@ -113,7 +113,7 @@ teardown() {
 
   assert_success
   assert_output --partial 'Cache hit at pipeline level'
-  assert_output --partial "Cache is compressed, uncompressing..."
+  assert_output --partial "Cache is compressed, uncompressing with zip"
 
   unstub cache_dummy
 }
@@ -133,7 +133,7 @@ teardown() {
 
   assert_success
   assert_output --partial 'Cache hit at all level'
-  assert_output --partial "Cache is compressed, uncompressing..."
+  assert_output --partial "Cache is compressed, uncompressing with zip"
 
   unstub cache_dummy
 }
@@ -152,7 +152,7 @@ teardown() {
 
   assert_success
   assert_output --partial 'Cache hit at branch level'
-  assert_output --partial "Cache is compressed, uncompressing..."
+  assert_output --partial "Cache is compressed, uncompressing with zip"
 
   unstub cache_dummy
 }

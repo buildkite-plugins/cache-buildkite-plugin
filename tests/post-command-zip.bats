@@ -25,8 +25,9 @@ setup() {
   stub cache_dummy \
     "save \* \* : echo saving \$3 in \$2"
 
+  # if the file is not created, this fails because zip
   stub zip \
-    "echo compressed \${@:2} into \$1"
+    "touch \$2; echo compressed \${@:3} into \$2"
 }
 
 teardown() {
