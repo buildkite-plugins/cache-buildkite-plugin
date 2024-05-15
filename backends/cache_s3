@@ -13,49 +13,63 @@ build_key() {
   fi
 }
 
-s3_cmd() {
-  local from="$1"
-  local to="$2"
-  local use_sync="${3:-1}"
-
-  aws_cmd=(aws s3)
-
-  if [ "${use_sync}" = 'true' ]; then
-    aws_cmd+=(sync)
-  else
-    aws_cmd+=(cp --recursive)
-  fi
-
-  if [ -n "${BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS}" ]; then
-    aws_cmd+=(--only-show-errors)
-  fi
+aws_cmd() {
+  aws_cmd=(aws)
 
   if [ -n "${BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT}" ]; then
     aws_cmd+=(--endpoint-url "${BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT}")
   fi
 
-  "${aws_cmd[@]}" "${from}" "${to}"
+  "${aws_cmd[@]}" "$@"
+}
+
+s3_copy() {
+  local from="$1"
+  local to="$2"
+  local use_sync="${3:-true}"
+  local options=()
+
+  if [ "${use_sync}" = 'true' ]; then
+    options+=(sync)
+  else
+    options+=(cp)
+  fi
+
+  if [ -n "${BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS}" ]; then
+    options+=(--only-show-errors)
+  fi
+
+  aws_cmd s3 "${options[@]}" "${from}" "${to}"
 }
 
 s3_listobjects() {
   local prefix="$1"
 
-  aws_cmd=(aws s3api list-objects-v2 --bucket "${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}" --prefix "$(build_key "${prefix}")" --max-items 1 --query Contents)
+  result="$(
+    aws_cmd s3api list-objects-v2 \
+      --bucket "${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}" \
+      --prefix "$(build_key "${prefix}")" \
+      --max-items 1 \
+      --query Contents
+  )"
 
-  if [ -n "${BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT}" ]; then
-    aws_cmd+=(--endpoint-url "${BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT}")
-  fi
-
-  result=$("${aws_cmd[@]}")
   [ "${result}" != 'null' ]
 }
 
 restore_cache() {
   local from="$1"
   local to="$2"
+  local sync='false'
+
+  key="$(build_key "${from}")"
+
+  # if the object does not exist, assume it is a folder so use sync
+  if ! aws_cmd s3api head-object --bucket "${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}" --key "${key}"; then
+    sync=true
+  fi
 
   # can not use sync as it may be a single file
-  s3_cmd "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${from}")" "${to}" 'false'
+  s3_copy "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/${key}" "${to}" "${sync}"
 }
 
 save_cache() {
@@ -66,7 +80,7 @@ save_cache() {
     use_sync='false'
   fi
 
-  s3_cmd "${from}" "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${to}")"
+  s3_copy "${from}" "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${to}")" "${use_sync}"
 }
 
 exists_cache() {
