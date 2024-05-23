@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-PLUGIN_PREFIX="CACHE"
+PLUGIN_PREFIX="K8S_CACHE"
 
 # Reads either a value or a list from the given env prefix
 function prefix_read_list() {
