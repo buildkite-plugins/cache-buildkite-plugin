@@ -21,6 +21,8 @@ configuration:
         - zip
         - tar
         - tgz
+    force:
+      type: boolean
     manifest:
       type: string
     path:
