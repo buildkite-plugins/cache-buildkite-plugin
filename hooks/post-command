@@ -15,13 +15,19 @@ if [ -z "${CACHE_PATH}" ] ; then
   exit 1
 fi
 
-LEVEL=$(plugin_read_config SAVE 'no')
-if [ "${LEVEL}" = 'no' ]; then
+SAVE_LEVELS=()
+if plugin_read_list_into_result SAVE; then
+  for LEVEL in "${result[@]}"; do
+    SAVE_LEVELS+=("${LEVEL}")
+
+    if [ "${LEVEL}" = 'file' ] && [ -z "$(plugin_read_config MANIFEST)" ]; then
+      echo "+++ 🚨 Missing manifest option in the cache plugin for file-level saving"
+      exit 1
+    fi
+  done
+else
   echo 'Cache not setup for saving'
   exit 0
-elif [ "${LEVEL}" = 'file' ] && [ -z "$(plugin_read_config MANIFEST)" ]; then
-  echo "+++ 🚨 Missing manifest option in the cache plugin for file-level saving"
-  exit 1
 fi
 
 COMPRESS=$(plugin_read_config COMPRESSION 'none')
@@ -30,8 +36,6 @@ if ! validate_compression "${COMPRESS}"; then
   exit 1
 fi
 
-KEY=$(build_key "${LEVEL}" "${CACHE_PATH}" "${COMPRESS}")
-
 if compression_active; then
   ACTUAL_PATH=$(mktemp)
   compress "${CACHE_PATH}" "${ACTUAL_PATH}"
@@ -39,5 +43,9 @@ else
   ACTUAL_PATH="${CACHE_PATH}"
 fi
 
-echo "Saving ${LEVEL}-level cache of ${CACHE_PATH}"
-backend_exec save "${KEY}" "${ACTUAL_PATH}"
+for LEVEL in "${SAVE_LEVELS[@]}"; do
+  KEY=$(build_key "${LEVEL}" "${CACHE_PATH}" "${COMPRESS}")
+
+  echo "Saving ${LEVEL}-level cache of ${CACHE_PATH}"
+  backend_exec save "${KEY}" "${ACTUAL_PATH}"
+done
