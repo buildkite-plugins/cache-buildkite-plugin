@@ -15,10 +15,19 @@ if [ -z "${CACHE_PATH}" ] ; then
   exit 1
 fi
 
+COMPRESS=$(plugin_read_config COMPRESSION 'none')
+if ! validate_compression "${COMPRESS}"; then
+  echo "+++ 🚨 Invalid value for compression option"
+  exit 1
+fi
+
 SAVE_LEVELS=()
 if plugin_read_list_into_result SAVE; then
   for LEVEL in "${result[@]}"; do
     SAVE_LEVELS+=("${LEVEL}")
+
+    # this validates the level as well
+    KEY=$(build_key "${LEVEL}" "${CACHE_PATH}" "${COMPRESS}")
 
     if [ "${LEVEL}" = 'file' ] && [ -z "$(plugin_read_config MANIFEST)" ]; then
       echo "+++ 🚨 Missing manifest option in the cache plugin for file-level saving"
@@ -28,12 +37,6 @@ if plugin_read_list_into_result SAVE; then
 else
   echo 'Cache not setup for saving'
   exit 0
-fi
-
-COMPRESS=$(plugin_read_config COMPRESSION 'none')
-if ! validate_compression "${COMPRESS}"; then
-  echo "+++ 🚨 Invalid value for compression option"
-  exit 1
 fi
 
 if compression_active; then
