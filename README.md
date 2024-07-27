@@ -131,7 +131,9 @@ steps:
           manifest: package-lock.json
           path: node_modules
           restore: pipeline
-          save: file
+          save:
+            - file
+            - branch
   - wait: ~
   - label: ':test_tube: Run tests'
     command: npm test # does not save cache, not necessary
