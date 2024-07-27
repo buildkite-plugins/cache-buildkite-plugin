@@ -32,9 +32,11 @@ The file or folder to cache.
 
 The maximum caching level to restore, if available. See [the available caching levels](#caching-levels)
 
-#### `save` (string, specific values)
+#### `save` (string or array of strings, specific values)
 
-The level to use for saving the cache. See [the available caching levels](#caching-levels)
+The level(s) to use for saving the cache. See [the available caching levels](#caching-levels).
+
+You can specify multiple levels in an array to save the same artifact as a cache for all those levels.
 
 ## Options
 
@@ -118,7 +120,7 @@ You can always have more complicated logic by using the plugin multiple times wi
 * second step:
   - will restore the file-level cache of the `node_modules` folder saved by the first step and run `npm test`
 * third step (that will only run on the `master` branch):
-  - will restore the file-level cache saved by the first step, run `npm run deploy` and finally save the contents of the `node_modules` folder as a pipeline-level cache for usage as a basis even when the lockfile changes (in the first step)
+  - will restore the file-level cache saved by the first step, run `npm run deploy` and finally save the contents of the `node_modules` folder as both a pipeline-level and global (all-level) cache for usage as a basis even when the lockfile changes (in the first step)
 
 ```yaml
 steps:
@@ -147,7 +149,9 @@ steps:
           manifest: package-lock.json
           path: node_modules
           restore: file
-          save: pipeline
+          save:
+            - pipeline
+            - all
 
 ```
 
