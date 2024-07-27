@@ -13,6 +13,9 @@ setup() {
   export BUILDKITE_PLUGIN_CACHE_BACKEND=dummy
   export BUILDKITE_PLUGIN_CACHE_PATH=tests/data/my_files
 
+  # to make all test easier
+  export BUILDKITE_PLUGIN_CACHE_FORCE=true
+
   # necessary for key-calculations
   export BUILDKITE_LABEL="step-label"
   export BUILDKITE_BRANCH="tests"
@@ -178,4 +181,19 @@ teardown() {
 
   assert_output --partial 'Invalid cache level unreal'
   refute_output --partial 'Saving pipeline-level cache'
+}
+
+@test "Saving is skipped when cache exists" {
+  export BUILDKITE_PLUGIN_CACHE_SAVE=all
+  export BUILDKITE_PLUGIN_CACHE_FORCE='false'
+
+  stub cache_dummy \
+    "exists \* \* : exit 0"
+
+  run "$PWD/hooks/post-command"
+
+  assert_success
+  refute_output --partial 'Saving all-level cache'
+
+  unstub cache_dummy
 }
