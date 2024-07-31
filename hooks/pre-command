@@ -8,52 +8,63 @@ DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
 # shellcheck source=lib/compression.bash
 . "${DIR}/../lib/compression.bash"
 
-RESTORE_PATH=$(plugin_read_config PATH)
+RESTORE_PATHS_ARR=$(plugin_read_list PATHS)
 
-if [ -z "${RESTORE_PATH}" ] ; then
-  echo "+++ 🚨 Missing path option in the cache plugin to restore"
-  exit 1
-fi
+if [[ ${#RESTORE_PATHS_ARR[@]} == 0 ]]; then
+  echo "no paths array found"
+else
+  for ((i = 0; i < ${#RESTORE_PATHS_ARR[@]}; i++)); do
+    RESTORE_PATH="${RESTORE_PATHS_ARR[$i]}"
 
-MAX_LEVEL=$(plugin_read_config RESTORE 'no')
-if [ "${MAX_LEVEL}" = 'no' ]; then
-  echo 'Cache not setup for restoring'
-  exit 0
-elif [ "${MAX_LEVEL}" = 'file' ] && [ -z "$(plugin_read_config MANIFEST)" ]; then
-  echo "+++ 🚨 Missing manifest option in the cache plugin for file-level restore"
-  exit 1
-fi
-
-COMPRESS=$(plugin_read_config COMPRESSION 'none')
-if ! validate_compression "${COMPRESS}"; then
-  echo "+++ 🚨 Invalid value for compression option"
-  exit 1
-fi
-
-build_key "${MAX_LEVEL}" "${RESTORE_PATH}" >/dev/null # to validate the level
-
-SORTED_LEVELS=(file step branch pipeline all)
-
-for CURRENT_LEVEL in "${SORTED_LEVELS[@]}"; do
-  if [ "${CURRENT_LEVEL}" = 'file' ] && [ -z "$(plugin_read_config MANIFEST)" ]; then
-    continue
-  fi
-
-  KEY=$(build_key "${CURRENT_LEVEL}" "${RESTORE_PATH}" "${COMPRESS}")
-  if backend_exec exists "${KEY}"; then
-    echo "Cache hit at ${CURRENT_LEVEL} level, restoring ${RESTORE_PATH}..."
-
-    if compression_active; then
-      TEMP_PATH=$(mktemp)
-      backend_exec get "${KEY}" "${TEMP_PATH}"
-      uncompress "${TEMP_PATH}" "${RESTORE_PATH}"
-    else
-      backend_exec get "${KEY}" "${RESTORE_PATH}"
+    if [ -z "${RESTORE_PATH}" ] ; then
+      echo "+++ 🚨 Missing path option in the cache plugin to restore"
+      exit 1
     fi
 
-    exit 0
-  elif [ "${CURRENT_LEVEL}" = "${MAX_LEVEL}" ]; then
-    echo "Cache miss up to ${CURRENT_LEVEL}-level, sorry"
-    break
-  fi
-done
+    echo "processing restore path ${RESTORE_PATH}"
+
+    MAX_LEVEL=$(plugin_read_config RESTORE 'no')
+    if [ "${MAX_LEVEL}" = 'no' ]; then
+      echo 'Cache not setup for restoring'
+      exit 0
+    elif [ "${MAX_LEVEL}" = 'file' ] && [ -z "$(plugin_read_config MANIFEST)" ]; then
+      echo "+++ 🚨 Missing manifest option in the cache plugin for file-level restore"
+      exit 1
+    fi
+
+    COMPRESS=$(plugin_read_config COMPRESSION 'none')
+    if ! validate_compression "${COMPRESS}"; then
+      echo "+++ 🚨 Invalid value for compression option"
+      exit 1
+    fi
+
+    build_key "${MAX_LEVEL}" "${RESTORE_PATH}" >/dev/null # to validate the level
+
+    SORTED_LEVELS=(file step branch pipeline all)
+
+    for CURRENT_LEVEL in "${SORTED_LEVELS[@]}"; do
+      if [ "${CURRENT_LEVEL}" = 'file' ] && [ -z "$(plugin_read_config MANIFEST)" ]; then
+        continue
+      fi
+
+      KEY=$(build_key "${CURRENT_LEVEL}" "${RESTORE_PATH}" "${COMPRESS}")
+      if backend_exec exists "${KEY}"; then
+        echo "Cache hit at ${CURRENT_LEVEL} level, restoring ${RESTORE_PATH}..."
+
+        if compression_active; then
+          TEMP_PATH=$(mktemp)
+          backend_exec get "${KEY}" "${TEMP_PATH}"
+          uncompress "${TEMP_PATH}" "${RESTORE_PATH}"
+        else
+          backend_exec get "${KEY}" "${RESTORE_PATH}"
+        fi
+
+        exit 0
+      elif [ "${CURRENT_LEVEL}" = "${MAX_LEVEL}" ]; then
+        echo "Cache miss up to ${CURRENT_LEVEL}-level, sorry"
+        break
+      fi
+    done
+
+  done
+fi

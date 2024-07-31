@@ -14,8 +14,8 @@ configuration:
         - tgz
     manifest:
       type: string
-    path:
-      type: string
+    paths:
+      type: array
     restore:
       type: string
       enum:
@@ -34,4 +34,4 @@ configuration:
         - all
   additionalProperties: false
   required:
-    - path
+    - paths
