@@ -3,6 +3,15 @@ description: Persist cache in between build steps
 author: https://github.com/buildkite-plugins
 requirements: []
 configuration:
+  $defs:
+    valid_levels:
+      type: string
+      enum:
+        - file
+        - step
+        - branch
+        - pipeline
+        - all
   properties:
     backend:
       type: string
@@ -17,21 +26,15 @@ configuration:
     path:
       type: string
     restore:
-      type: string
-      enum:
-        - file
-        - step
-        - branch
-        - pipeline
-        - all
+      $ref: '#/$defs/valid_levels'
     save:
-      type: string
-      enum:
-        - file
-        - step
-        - branch
-        - pipeline
-        - all
+      oneOf:
+        - $ref: '#/$defs/valid_levels'
+        - type: array
+          items:
+            $ref: '#/$defs/valid_levels'
   additionalProperties: false
-  required:
-    - path
+  anyOf:
+    - required: [ path, save ]
+    - required: [ path, restore ]
+

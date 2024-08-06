@@ -138,3 +138,44 @@ teardown() {
 
   unstub cache_dummy
 }
+
+@test "Multiple level saving" {
+  export BUILDKITE_PLUGIN_CACHE_SAVE_0=all
+  export BUILDKITE_PLUGIN_CACHE_SAVE_1=pipeline
+
+  stub cache_dummy \
+    "save \* \* : echo saving \$3 in \$2" \
+    "save \* \* : echo saving \$3 in \$2"
+
+  run "$PWD/hooks/post-command"
+
+  assert_success
+  assert_output --partial 'Saving all-level cache'
+  assert_output --partial 'Saving pipeline-level cache'
+
+  unstub cache_dummy
+}
+
+@test "Multiple level file without manifest fails" {
+  export BUILDKITE_PLUGIN_CACHE_SAVE_0=all
+  export BUILDKITE_PLUGIN_CACHE_SAVE_1=file
+
+  run "$PWD/hooks/post-command"
+
+  assert_failure
+
+  assert_output --partial 'Missing manifest option'
+  refute_output --partial 'Saving file-level cache'
+}
+
+@test "Multiple level containing invalid one fails" {
+  export BUILDKITE_PLUGIN_CACHE_SAVE_0=pipeline
+  export BUILDKITE_PLUGIN_CACHE_SAVE_1=unreal
+
+  run "$PWD/hooks/post-command"
+
+  assert_failure
+
+  assert_output --partial 'Invalid cache level unreal'
+  refute_output --partial 'Saving pipeline-level cache'
+}
