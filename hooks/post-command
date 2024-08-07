@@ -49,6 +49,11 @@ fi
 for LEVEL in "${SAVE_LEVELS[@]}"; do
   KEY=$(build_key "${LEVEL}" "${CACHE_PATH}" "${COMPRESS}")
 
-  echo "Saving ${LEVEL}-level cache of ${CACHE_PATH}"
-  backend_exec save "${KEY}" "${ACTUAL_PATH}"
+  if [ "$(plugin_read_config FORCE 'false')" != 'false' ] ||
+     ! backend_exec exists "${KEY}"; then
+    echo "Saving ${LEVEL}-level cache of ${CACHE_PATH}"
+    backend_exec save "${KEY}" "${ACTUAL_PATH}"
+  else
+    echo "Cache of ${LEVEL} already exists, skipping"
+  fi
 done

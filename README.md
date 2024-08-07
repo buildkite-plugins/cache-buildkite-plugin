@@ -73,6 +73,10 @@ Assuming the underlying executables are available, the allowed values are:
 * `tgz`: `tar` with gzip compression
 * `zip`: `(un)zip` compression
 
+### `force` (boolean, optional, save only)
+
+Force saving the cache even if it exists. Default: `false`.
+
 ### `manifest` (string, required if using `file` caching level)
 
 A path to a file or folder that will be hashed to create file-level caches.
@@ -131,7 +135,9 @@ steps:
           manifest: package-lock.json
           path: node_modules
           restore: pipeline
-          save: file
+          save:
+            - file
+            - branch
   - wait: ~
   - label: ':test_tube: Run tests'
     command: npm test # does not save cache, not necessary

@@ -15,6 +15,9 @@ setup() {
   export BUILDKITE_PLUGIN_CACHE_COMPRESSION=tgz
   export BUILDKITE_PLUGIN_CACHE_PATH=tests/data/my_files
 
+  # to make all test easier
+  export BUILDKITE_PLUGIN_CACHE_FORCE=true
+
   # necessary for key-calculations
   export BUILDKITE_LABEL="step-label"
   export BUILDKITE_BRANCH="tests"
