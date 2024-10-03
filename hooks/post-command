@@ -39,18 +39,25 @@ else
   exit 0
 fi
 
-if compression_active; then
-  ACTUAL_PATH=$(mktemp)
-  compress "${CACHE_PATH}" "${ACTUAL_PATH}"
-else
-  ACTUAL_PATH="${CACHE_PATH}"
-fi
+HAS_TRIED_COMPRESSION=0
 
 for LEVEL in "${SAVE_LEVELS[@]}"; do
   KEY=$(build_key "${LEVEL}" "${CACHE_PATH}" "${COMPRESS}")
 
   if [ "$(plugin_read_config FORCE 'false')" != 'false' ] ||
      ! backend_exec exists "${KEY}"; then
+
+    if [ "${HAS_TRIED_COMPRESSION}" -eq 0 ]; then
+      HAS_TRIED_COMPRESSION=1
+
+      if compression_active; then
+        ACTUAL_PATH=$(mktemp)
+        compress "${CACHE_PATH}" "${ACTUAL_PATH}"
+      else
+        ACTUAL_PATH="${CACHE_PATH}"
+      fi
+    fi
+    
     echo "Saving ${LEVEL}-level cache of ${CACHE_PATH}"
     backend_exec save "${KEY}" "${ACTUAL_PATH}"
   else
