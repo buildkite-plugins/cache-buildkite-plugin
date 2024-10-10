@@ -47,6 +47,7 @@ for CURRENT_LEVEL in "${SORTED_LEVELS[@]}"; do
       TEMP_PATH=$(mktemp)
       backend_exec get "${KEY}" "${TEMP_PATH}"
       uncompress "${TEMP_PATH}" "${RESTORE_PATH}"
+      rm "${TEMP_PATH}"
     else
       backend_exec get "${KEY}" "${RESTORE_PATH}"
     fi
