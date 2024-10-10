@@ -82,6 +82,7 @@ uncompress() {
       mv "${FILE}" "${RESTORE_DIR}/${FILE}.zip"
       pushd "${RESTORE_DIR}" || exit 1
       unzip -o "${FILE}.zip"
+      rm "${FILE}.zip"
       popd || exit 1
     else
       # because ZIP complains if the file does not end with .zip
