@@ -7,6 +7,8 @@
 setup() {
   load "${BATS_PLUGIN_PATH}/load.bash"
 
+  export BUILDKITE_COMMAND_EXIT_STATUS=0
+
   mkdir -p tests/data/my_files
   echo "all the llamas" > "tests/data/my_files/llamas.txt"
   echo "no alpacas" > "tests/data/my_files/alpacas.txt"
