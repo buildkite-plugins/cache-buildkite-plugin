@@ -36,6 +36,15 @@ teardown() {
   assert_output --partial 'Cache not setup for saving'
 }
 
+@test 'If command failed, do nothing' {
+  export BUILDKITE_COMMAND_EXIT_STATUS=127
+
+  run "$PWD/hooks/post-command"
+
+  assert_success
+  assert_output --partial 'Aborting cache post-command hook because command exited with status 127'
+}
+
 @test "Missing path fails" {
   unset BUILDKITE_PLUGIN_CACHE_PATH
 
