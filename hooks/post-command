@@ -1,6 +1,12 @@
 #!/bin/bash
 set -euo pipefail
 
+# skip caching if command exited non-zero
+if [ "${BUILDKITE_COMMAND_EXIT_STATUS}" -ne 0 ] ; then
+  echo "Aborting cache post-command hook because command exited with status $BUILDKITE_COMMAND_EXIT_STATUS"
+  exit 0
+fi
+
 DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
 
 # shellcheck source=lib/shared.bash
