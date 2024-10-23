@@ -22,9 +22,7 @@ setup() {
   export BUILDKITE_ORGANIZATION_SLUG="bk-cache-test"
   export BUILDKITE_PIPELINE_SLUG="cache-pipeline"
 
-  # stub is the same for all tests
-  stub tar \
-    "xzf \* \* : echo uncompressed \$2 into \$3"
+
 }
 
 teardown() {
@@ -35,6 +33,9 @@ teardown() {
 
 @test 'Existing file-based restore' {
   export BUILDKITE_PLUGIN_CACHE_RESTORE=file
+
+  stub tar \
+    "xzf \* \* : echo uncompressed \$2 into \$3"
 
   stub cache_dummy \
     'exists \* : exit 0' \
@@ -52,6 +53,9 @@ teardown() {
 @test 'Existing file-based restore even when max-level is higher' {
   export BUILDKITE_PLUGIN_CACHE_RESTORE=all
 
+  stub tar \
+    "xzf \* \* : echo uncompressed \$2 into \$3"
+
   stub cache_dummy \
     'exists \* : exit 0' \
     "get \* \* : echo restoring \$2 to \$3"
@@ -67,6 +71,9 @@ teardown() {
 
 @test 'Existing step-based restore' {
   export BUILDKITE_PLUGIN_CACHE_RESTORE=step
+
+  stub tar \
+    "xzf \* \* : echo uncompressed \$2 into \$3"
 
   stub cache_dummy \
     'exists \* : exit 1' \
@@ -85,6 +92,9 @@ teardown() {
 @test 'Existing branch-based restore' {
   export BUILDKITE_PLUGIN_CACHE_RESTORE=branch
 
+  stub tar \
+    "xzf \* \* : echo uncompressed \$2 into \$3"
+
   stub cache_dummy \
     'exists \* : exit 1' \
     'exists \* : exit 1' \
@@ -101,6 +111,9 @@ teardown() {
 }
 @test 'Existing pipeline-based restore' {
   export BUILDKITE_PLUGIN_CACHE_RESTORE=pipeline
+
+  stub tar \
+    "xzf \* \* : echo uncompressed \$2 into \$3"
 
   stub cache_dummy \
     'exists \* : exit 1' \
@@ -120,6 +133,9 @@ teardown() {
 
 @test 'Existing all-based restore' {
   export BUILDKITE_PLUGIN_CACHE_RESTORE=all
+
+  stub tar \
+    "xzf \* \* : echo uncompressed \$2 into \$3"
 
   stub cache_dummy \
     'exists \* : exit 1' \
@@ -141,6 +157,9 @@ teardown() {
 @test 'Existing lower level restore works' {
   export BUILDKITE_PLUGIN_CACHE_RESTORE=all
 
+  stub tar \
+    "xzf \* \* : echo uncompressed \$2 into \$3"
+
   stub cache_dummy \
     'exists \* : exit 1' \
     'exists \* : exit 1' \
@@ -152,6 +171,27 @@ teardown() {
   assert_success
   assert_output --partial 'Cache hit at branch level'
   assert_output --partial 'Cache is compressed, uncompressing with tgz'
+
+  unstub cache_dummy
+}
+
+@test 'Existing file-based restore to absolute path' {
+  export BUILDKITE_PLUGIN_CACHE_RESTORE=file
+  export BUILDKITE_PLUGIN_CACHE_PATH=/tmp/tests/data/my_files
+
+  stub tar \
+    "xzPf \* \* : echo uncompressed \$2 into \$3"
+
+
+  stub cache_dummy \
+    'exists \* : exit 0' \
+    "get \* \* : echo restoring \$2 to \$3"
+
+  run "$PWD/hooks/post-checkout"
+
+  assert_success
+  assert_output --partial 'Cache hit at file level'
+  assert_output --partial 'Cache is compressed, uncompressing with tgz...'
 
   unstub cache_dummy
 }

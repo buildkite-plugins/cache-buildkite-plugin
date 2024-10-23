@@ -156,3 +156,19 @@ teardown() {
 
   unstub cache_dummy
 }
+
+@test 'Existing file-based restore to absolute path' {
+  export BUILDKITE_PLUGIN_CACHE_RESTORE=all
+
+  stub cache_dummy \
+    'exists \* : exit 0' \
+    "get \* \* : echo restoring \$2 to \$3"
+
+  run "$PWD/hooks/post-checkout"
+
+  assert_success
+  assert_output --partial 'Cache hit at file level'
+  assert_output --partial "Cache is compressed, uncompressing with zip"
+
+  unstub cache_dummy
+}
