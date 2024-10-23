@@ -38,7 +38,7 @@ teardown() {
 
   stub cache_dummy \
     'exists \* : exit 0' \
-    "get \* \* : mkdir -p $(dirname \$3) && touch \$3 && echo restoring \$2 to \$3"
+    "get \* \* : echo restoring \$2 to \$3"
 
   run "$PWD/hooks/post-checkout"
 

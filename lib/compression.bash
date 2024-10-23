@@ -35,21 +35,23 @@ compress() {
   echo "Compressing ${COMPRESSED_FILE} with ${COMPRESSION}..."
 
   if [ "${COMPRESSION}" = 'tgz' ]; then
+    TAR_OPTS='cz'
     if is_absolute_path "${COMPRESSED_FILE}"; then
-      tar czPf "${FILE}" "${COMPRESSED_FILE}"
-    else
-      tar czf "${FILE}" "${COMPRESSED_FILE}"
+      TAR_OPTS="${TAR_OPTS}"P
     fi
+
+    tar "${TAR_OPTS}"f "${FILE}" "${COMPRESSED_FILE}"
   elif [ "${COMPRESSION}" = 'zip' ]; then
     if is_absolute_path "${COMPRESSED_FILE}"; then
       local COMPRESS_DIR
       COMPRESS_DIR="$(dirname "${COMPRESSED_FILE}")"
-      echo "Shifting to absolute path ${COMPRESS_DIR}"
-      pushd "${COMPRESS_DIR}" || exit 1
-      # because ZIP complains if the file does not end with .zip
-      zip -r "${FILE}.zip" "${COMPRESSED_FILE}"
-      popd || exit 1
-      mv "${COMPRESS_DIR}/${FILE}.zip" "${FILE}"
+      ( # subshell to avoid changing the working directory
+        # shellcheck disable=SC2164 # we will exit anyway
+        cd "${COMPRESS_DIR}"
+        # because ZIP complains if the file does not end with .zip
+        zip -r "${FILE}.zip" "${COMPRESSED_FILE}"
+        mv "${FILE}.zip" "${FILE}"
+      )
     else
       # because ZIP complains if the file does not end with .zip
       zip -r "${FILE}.zip" "${COMPRESSED_FILE}"
@@ -68,22 +70,24 @@ uncompress() {
   echo "Cache is compressed, uncompressing with ${COMPRESSION}..."
 
   if [ "${COMPRESSION}" = 'tgz' ]; then
+    TAR_OPTS='xz'
     if is_absolute_path "${RESTORE_PATH}"; then
-      tar xzPf "${FILE}"
-    else
-      tar xzf "${FILE}"
+      TAR_OPTS="${TAR_OPTS}"P
     fi
+
+    tar "${TAR_OPTS}"f "${FILE}" "${RESTORE_PATH}"
   elif [ "${COMPRESSION}" = 'zip' ]; then
     if is_absolute_path "${RESTORE_PATH}"; then
       local RESTORE_DIR
       RESTORE_DIR="$(dirname "${RESTORE_PATH}")"
-      echo "Shifting to absolute path ${RESTORE_DIR}"
-      mkdir -p "${RESTORE_DIR}"
-      mv "${FILE}" "${RESTORE_DIR}/${FILE}.zip"
-      pushd "${RESTORE_DIR}" || exit 1
-      unzip -o "${FILE}.zip"
-      rm "${FILE}.zip"
-      popd || exit 1
+      ( # subshell to avoid changing the working directory
+        mkdir -p "${RESTORE_DIR}"
+        # shellcheck disable=SC2164 # we will exit anyway
+        cd "${RESTORE_DIR}"
+        mv "${FILE}" "${RESTORE_DIR}/${FILE}.zip"
+        unzip -o "${FILE}.zip"
+        rm "${FILE}.zip"
+      )
     else
       # because ZIP complains if the file does not end with .zip
       mv "${FILE}" "${FILE}.zip"

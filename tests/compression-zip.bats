@@ -21,7 +21,6 @@ setup() {
 
   assert_success
   assert_output --partial 'Compressing /tmp/tests/data/my_files with zip...'
-  assert_output --partial 'Shifting to absolute path /tmp/tests/data'
 
   unstub zip
   rm -rf /tmp/tests/data/my_files
@@ -36,7 +35,6 @@ setup() {
 
   assert_success
   assert_output --partial 'Cache is compressed, uncompressing with zip...'
-  assert_output --partial 'Shifting to absolute path /tmp/tests/data'
 
   unstub unzip
 }
