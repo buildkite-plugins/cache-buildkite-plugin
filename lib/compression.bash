@@ -84,9 +84,9 @@ uncompress() {
         mkdir -p "${RESTORE_DIR}"
         # shellcheck disable=SC2164 # we will exit anyway
         cd "${RESTORE_DIR}"
-        mv "${FILE}" "${RESTORE_DIR}/${FILE}.zip"
-        unzip -o "${FILE}.zip"
-        rm "${FILE}.zip"
+        mv "${FILE}" "${RESTORE_DIR}/compressed.zip"
+        unzip -o "compressed.zip"
+        rm "compressed.zip"
       )
     else
       # because ZIP complains if the file does not end with .zip

@@ -32,9 +32,6 @@ setup() {
 
   stub cache_dummy \
     "save \* \* : echo saving \$3 in \$2"
-
-  stub tar \
-    "czf \* \* : echo compressed \$2 into \$3"
 }
 
 teardown() {

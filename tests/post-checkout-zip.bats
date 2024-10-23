@@ -138,7 +138,6 @@ teardown() {
   unstub cache_dummy
 }
 
-
 @test 'Existing lower level restore works' {
   export BUILDKITE_PLUGIN_CACHE_RESTORE=all
 
@@ -159,10 +158,12 @@ teardown() {
 
 @test 'Existing file-based restore to absolute path' {
   export BUILDKITE_PLUGIN_CACHE_RESTORE=all
+  export BUILDKITE_PLUGIN_CACHE_PATH=/tmp/tests/data/my_files
 
+  # Need to create a file here to be able to move it to restore path later were it will be removed
   stub cache_dummy \
     'exists \* : exit 0' \
-    "get \* \* : echo restoring \$2 to \$3"
+    "get \* \* : mkdir -p $(dirname \$3) && touch \$3 && echo restoring \$2 to \$3"
 
   run "$PWD/hooks/post-checkout"
 
