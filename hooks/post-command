@@ -70,3 +70,7 @@ for LEVEL in "${SAVE_LEVELS[@]}"; do
     echo "Cache of ${LEVEL} already exists, skipping"
   fi
 done
+
+if compression_active; then
+  rm "${ACTUAL_PATH}"
+fi
