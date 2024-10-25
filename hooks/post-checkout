@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # shellcheck source=lib/shared.bash
 . "${DIR}/../lib/shared.bash"
@@ -10,7 +10,7 @@ DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
 
 RESTORE_PATH=$(plugin_read_config PATH)
 
-if [ -z "${RESTORE_PATH}" ] ; then
+if [ -z "${RESTORE_PATH}" ]; then
   echo "+++ 🚨 Missing path option in the cache plugin to restore"
   exit 1
 fi

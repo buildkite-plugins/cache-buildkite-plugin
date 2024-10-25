@@ -107,3 +107,18 @@ teardown() {
   assert_output --partial 'Saving all-level cache'
   assert_output --partial 'Saving pipeline-level cache'
 }
+
+@test 'Pipeline-level saving with absolute cache path' {
+  BUILDKITE_PLUGIN_CACHE_PATH="$(mktemp -d)"
+  export BUILDKITE_PLUGIN_CACHE_PATH
+  export BUILDKITE_PLUGIN_CACHE_SAVE=pipeline
+
+  run "$PWD/hooks/post-command"
+
+  assert_success
+  assert_output --partial "Compressing ${BUILDKITE_PLUGIN_CACHE_PATH} with zip..."
+  assert_output --partial 'Saving pipeline-level cache'
+
+  rm -rf "${BUILDKITE_PLUGIN_CACHE_PATH}"
+}
+

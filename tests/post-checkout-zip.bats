@@ -24,7 +24,7 @@ setup() {
 
   # stub is the same for all tests
   stub unzip \
-    "-o \* \* : echo uncompressed \$3 into \$4"
+    "-o \* \* : echo uncompressed \$2 into \$3"
 }
 
 teardown() {
@@ -138,7 +138,6 @@ teardown() {
   unstub cache_dummy
 }
 
-
 @test 'Existing lower level restore works' {
   export BUILDKITE_PLUGIN_CACHE_RESTORE=all
 
@@ -152,6 +151,24 @@ teardown() {
 
   assert_success
   assert_output --partial 'Cache hit at branch level'
+  assert_output --partial "Cache is compressed, uncompressing with zip"
+
+  unstub cache_dummy
+}
+
+@test 'Existing file-based restore to absolute path' {
+  export BUILDKITE_PLUGIN_CACHE_RESTORE=all
+  export BUILDKITE_PLUGIN_CACHE_PATH=/tmp/tests/data/my_files
+
+  # Need to create a file here to be able to move it to restore path later were it will be removed
+  stub cache_dummy \
+    'exists \* : exit 0' \
+    "get \* \* : mkdir -p $(dirname \$3) && touch \$3 && echo restoring \$2 to \$3"
+
+  run "$PWD/hooks/post-checkout"
+
+  assert_success
+  assert_output --partial 'Cache hit at file level'
   assert_output --partial "Cache is compressed, uncompressing with zip"
 
   unstub cache_dummy

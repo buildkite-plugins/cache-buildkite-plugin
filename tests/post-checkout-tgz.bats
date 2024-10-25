@@ -24,7 +24,8 @@ setup() {
 
   # stub is the same for all tests
   stub tar \
-    "xzf \* \* : echo uncompressed \$2 into \$3"
+    "\* \* \* : echo uncompressed \$2 into \$3 with options \$1"
+
 }
 
 teardown() {
@@ -45,6 +46,7 @@ teardown() {
   assert_success
   assert_output --partial 'Cache hit at file level'
   assert_output --partial 'Cache is compressed, uncompressing with tgz'
+  assert_output --partial "with options xzf"
 
   unstub cache_dummy
 }
@@ -152,6 +154,24 @@ teardown() {
   assert_success
   assert_output --partial 'Cache hit at branch level'
   assert_output --partial 'Cache is compressed, uncompressing with tgz'
+
+  unstub cache_dummy
+}
+
+@test 'Existing file-based restore to absolute path' {
+  export BUILDKITE_PLUGIN_CACHE_RESTORE=file
+  export BUILDKITE_PLUGIN_CACHE_PATH=/tmp/tests/data/my_files
+
+  stub cache_dummy \
+    'exists \* : exit 0' \
+    "get \* \* : echo restoring \$2 to \$3"
+
+  run "$PWD/hooks/post-checkout"
+
+  assert_success
+  assert_output --partial 'Cache hit at file level'
+  assert_output --partial 'Cache is compressed, uncompressing with tgz...'
+  assert_output --partial "with options xzPf"
 
   unstub cache_dummy
 }
