@@ -35,6 +35,11 @@ configuration:
         - type: array
           items:
             $ref: '#/$defs/valid_levels'
+    fs_copy_tool:
+      type: string
+      enum:
+        - cp
+        - rsync
   additionalProperties: false
   anyOf:
     - required: [ path, save ]
