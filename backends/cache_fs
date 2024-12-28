@@ -22,7 +22,11 @@ restore_cache() {
   # shellcheck disable=2064  # actually want variable interpolated here
   trap "release_lock_folder '${from}'" SIGINT SIGTERM SIGQUIT
 
-  cp -a "$from" "$to"
+  if [ -d "$from" ]; then
+    cp -a "${from}/." "$to" # copy as folder
+  else
+    cp -a "$from" "$to"
+  fi
 
   release_lock "${from}"
 }
