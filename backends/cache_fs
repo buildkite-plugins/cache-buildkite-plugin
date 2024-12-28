@@ -17,12 +17,25 @@ DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
 restore_cache() {
   local from="${CACHE_FOLDER}/$1"
   local to="$2"
+  local fs_copy_tool="$3"
 
   wait_and_lock "${from}"
   # shellcheck disable=2064  # actually want variable interpolated here
   trap "release_lock_folder '${from}'" SIGINT SIGTERM SIGQUIT
 
-  cp -a "$from" "$to"
+  if [ -d "$from" ]; then
+    if [ "$fs_copy_tool" = "rsync" ]; then
+      rsync -a --delete "${from}/." "$to" # copy as folder
+    else
+      cp -a "${from}/." "$to" # copy as folder
+    fi
+  else
+    if [ "$fs_copy_tool" = "rsync" ]; then
+      rsync -a --delete "$from" "$to"
+    else
+      cp -a "$from" "$to"
+    fi
+  fi
 
   release_lock "${from}"
 }

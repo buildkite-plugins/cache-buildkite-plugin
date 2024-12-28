@@ -60,3 +60,16 @@ function plugin_read_config() {
   local default="${2:-}"
   echo "${!var:-$default}"
 }
+
+function validate_fs_copy_tool() {
+  local FS_COPY_TOOL="$1"
+
+  VALID_FS_COPY_TOOL=(cp rsync)
+  for VALID in "${VALID_FS_COPY_TOOL[@]}"; do
+    if [ "${FS_COPY_TOOL}" = "${VALID}" ]; then
+      return 0
+    fi
+  done
+
+  return 1
+}
