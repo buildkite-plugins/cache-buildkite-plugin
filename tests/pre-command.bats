@@ -26,7 +26,7 @@ teardown() {
 }
 
 @test 'If not setup for restoring, do nothing' {
-  run "$PWD/hooks/post-checkout"
+  run "$PWD/hooks/pre-command"
 
   assert_success
   assert_output --partial 'Cache not setup for restoring'
@@ -35,7 +35,7 @@ teardown() {
 @test "Missing path fails" {
   unset BUILDKITE_PLUGIN_CACHE_PATH
 
-  run "$PWD/hooks/post-checkout"
+  run "$PWD/hooks/pre-command"
 
   assert_failure
   assert_output --partial 'Missing path option'
@@ -44,7 +44,7 @@ teardown() {
 @test "Invalid level fails" {
   export BUILDKITE_PLUGIN_CACHE_RESTORE=unreal
 
-  run "$PWD/hooks/post-checkout"
+  run "$PWD/hooks/pre-command"
 
   assert_failure
   assert_output --partial 'Invalid cache level'
@@ -54,7 +54,7 @@ teardown() {
   export BUILDKITE_PLUGIN_CACHE_RESTORE=all
   export BUILDKITE_PLUGIN_CACHE_COMPRESSION=invalid
 
-  run "$PWD/hooks/post-checkout"
+  run "$PWD/hooks/pre-command"
 
   assert_failure
   assert_output --partial 'Invalid value for compression option'
@@ -64,7 +64,7 @@ teardown() {
   export BUILDKITE_PLUGIN_CACHE_RESTORE=file
   unset BUILDKITE_PLUGIN_CACHE_MANIFEST
 
-  run "$PWD/hooks/post-checkout"
+  run "$PWD/hooks/pre-command"
 
   assert_failure
   assert_output --partial 'Missing manifest option'
@@ -76,7 +76,7 @@ teardown() {
   stub cache_dummy \
     'exists \* : exit 1'
 
-  run "$PWD/hooks/post-checkout"
+  run "$PWD/hooks/pre-command"
 
   assert_success
   assert_output --partial 'Cache miss up to file-level, sorry'
@@ -91,7 +91,7 @@ teardown() {
     'exists \* : exit 1' \
     'exists \* : exit 1'
 
-  run "$PWD/hooks/post-checkout"
+  run "$PWD/hooks/pre-command"
 
   assert_success
   assert_output --partial 'Cache miss up to step-level, sorry'
@@ -106,7 +106,7 @@ teardown() {
   stub cache_dummy \
     'exists \* : exit 1'
 
-  run "$PWD/hooks/post-checkout"
+  run "$PWD/hooks/pre-command"
 
   assert_success
   assert_output --partial 'Cache miss up to step-level, sorry'
@@ -122,7 +122,7 @@ teardown() {
     'exists \* : exit 1' \
     'exists \* : exit 1'
 
-  run "$PWD/hooks/post-checkout"
+  run "$PWD/hooks/pre-command"
 
   assert_success
   assert_output --partial 'Cache miss up to branch-level, sorry'
@@ -138,7 +138,7 @@ teardown() {
     'exists \* : exit 1' \
     'exists \* : exit 1'
 
-  run "$PWD/hooks/post-checkout"
+  run "$PWD/hooks/pre-command"
 
   assert_success
   assert_output --partial 'Cache miss up to pipeline-level, sorry'
@@ -156,7 +156,7 @@ teardown() {
     'exists \* : exit 1' \
     'exists \* : exit 1'
 
-  run "$PWD/hooks/post-checkout"
+  run "$PWD/hooks/pre-command"
 
   assert_success
   assert_output --partial 'Cache miss up to all-level, sorry'
@@ -171,7 +171,7 @@ teardown() {
     'exists \* : exit 0' \
     "get \* \* : echo restoring \$2 to \$3"
 
-  run "$PWD/hooks/post-checkout"
+  run "$PWD/hooks/pre-command"
 
   assert_success
   assert_output --partial 'Cache hit at file level'
@@ -186,7 +186,7 @@ teardown() {
     'exists \* : exit 0' \
     "get \* \* : echo restoring \$2 to \$3"
 
-  run "$PWD/hooks/post-checkout"
+  run "$PWD/hooks/pre-command"
 
   assert_success
   assert_output --partial 'Cache hit at file level'
@@ -202,7 +202,7 @@ teardown() {
     'exists \* : exit 0' \
     "get \* \* : echo restoring \$2 to \$3"
 
-  run "$PWD/hooks/post-checkout"
+  run "$PWD/hooks/pre-command"
 
   assert_success
   assert_output --partial 'Cache hit at step level'
@@ -219,7 +219,7 @@ teardown() {
     'exists \* : exit 0' \
     "get \* \* : echo restoring \$2 to \$3"
 
-  run "$PWD/hooks/post-checkout"
+  run "$PWD/hooks/pre-command"
 
   assert_success
   assert_output --partial 'Cache hit at branch level'
@@ -236,7 +236,7 @@ teardown() {
     'exists \* : exit 0' \
     "get \* \* : echo restoring \$2 to \$3"
 
-  run "$PWD/hooks/post-checkout"
+  run "$PWD/hooks/pre-command"
 
   assert_success
   assert_output --partial 'Cache hit at pipeline level'
@@ -255,7 +255,7 @@ teardown() {
     'exists \* : exit 0' \
     "get \* \* : echo restoring \$2 to \$3"
 
-  run "$PWD/hooks/post-checkout"
+  run "$PWD/hooks/pre-command"
 
   assert_success
   assert_output --partial 'Cache hit at all level'
@@ -272,7 +272,7 @@ teardown() {
     'exists \* : exit 0' \
     "get \* \* : echo restoring \$2 to \$3"
 
-  run "$PWD/hooks/post-checkout"
+  run "$PWD/hooks/pre-command"
 
   assert_success
   assert_output --partial 'Cache hit at branch level'
