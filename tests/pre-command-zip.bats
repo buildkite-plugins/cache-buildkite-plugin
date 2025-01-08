@@ -40,7 +40,7 @@ teardown() {
     'exists \* : exit 0' \
     "get \* \* : echo restoring \$2 to \$3"
 
-  run "$PWD/hooks/post-checkout"
+  run "$PWD/hooks/pre-command"
 
   assert_success
   assert_output --partial 'Cache hit at file level'
@@ -56,7 +56,7 @@ teardown() {
     'exists \* : exit 0' \
     "get \* \* : echo restoring \$2 to \$3"
 
-  run "$PWD/hooks/post-checkout"
+  run "$PWD/hooks/pre-command"
 
   assert_success
   assert_output --partial 'Cache hit at file level'
@@ -73,7 +73,7 @@ teardown() {
     'exists \* : exit 0' \
     "get \* \* : echo restoring \$2 to \$3"
 
-  run "$PWD/hooks/post-checkout"
+  run "$PWD/hooks/pre-command"
 
   assert_success
   assert_output --partial 'Cache hit at step level'
@@ -91,7 +91,7 @@ teardown() {
     'exists \* : exit 0' \
     "get \* \* : echo restoring \$2 to \$3"
 
-  run "$PWD/hooks/post-checkout"
+  run "$PWD/hooks/pre-command"
 
   assert_success
   assert_output --partial 'Cache hit at branch level'
@@ -109,7 +109,7 @@ teardown() {
     'exists \* : exit 0' \
     "get \* \* : echo restoring \$2 to \$3"
 
-  run "$PWD/hooks/post-checkout"
+  run "$PWD/hooks/pre-command"
 
   assert_success
   assert_output --partial 'Cache hit at pipeline level'
@@ -129,7 +129,7 @@ teardown() {
     'exists \* : exit 0' \
     "get \* \* : echo restoring \$2 to \$3"
 
-  run "$PWD/hooks/post-checkout"
+  run "$PWD/hooks/pre-command"
 
   assert_success
   assert_output --partial 'Cache hit at all level'
@@ -147,7 +147,7 @@ teardown() {
     'exists \* : exit 0' \
     "get \* \* : echo restoring \$2 to \$3"
 
-  run "$PWD/hooks/post-checkout"
+  run "$PWD/hooks/pre-command"
 
   assert_success
   assert_output --partial 'Cache hit at branch level'
@@ -165,7 +165,7 @@ teardown() {
     'exists \* : exit 0' \
     "get \* \* : mkdir -p $(dirname \$3) && touch \$3 && echo restoring \$2 to \$3"
 
-  run "$PWD/hooks/post-checkout"
+  run "$PWD/hooks/pre-command"
 
   assert_success
   assert_output --partial 'Cache hit at file level'
