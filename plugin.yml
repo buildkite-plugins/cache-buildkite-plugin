@@ -24,7 +24,11 @@ configuration:
     force:
       type: boolean
     manifest:
-      type: string
+      oneOf:
+        - type: string
+        - type: array
+          items:
+            type: string
     path:
       type: string
     restore:
