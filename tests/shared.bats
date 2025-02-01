@@ -64,7 +64,7 @@ teardown() {
 
   EMPTY_FILE="${output}"
 
-  # testing that chaging what will be cached, changes the output
+  # testing that changing what will be cached, changes the output
   run build_key file FOLDER2
 
   assert_success
@@ -105,7 +105,7 @@ teardown() {
 
   EMPTY_FOLDER="${output}"
   echo With empty folder "$EMPTY_FOLDER"
-  # testing that chaging what will be cached, changes the output
+  # testing that changing what will be cached, changes the output
 
   run build_key file FOLDER2
 
@@ -120,7 +120,6 @@ teardown() {
   assert_success
   refute_output "${EMPTY_FOLDER}"
   MODIFIED_FOLDER="${output}"
-  echo AFTER test.file was modified "$MODIFIED_FOLDER"
 
   # adding things outside the manifest does not change
   mkdir FOLDER
