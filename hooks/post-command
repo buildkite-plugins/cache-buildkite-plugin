@@ -51,6 +51,7 @@ for LEVEL in "${SAVE_LEVELS[@]}"; do
   KEY=$(build_key "${LEVEL}" "${CACHE_PATH}" "${COMPRESS}")
 
   if [ "$(plugin_read_config FORCE 'false')" != 'false' ] ||
+     [ "${lower_level_updated:-false}" = 'true' ] ||
      ! backend_exec exists "${KEY}"; then
     echo "Saving ${LEVEL}-level cache of ${CACHE_PATH}"
     if compression_active && [ "${already_compressed:-false}" = 'false' ]; then
@@ -59,6 +60,7 @@ for LEVEL in "${SAVE_LEVELS[@]}"; do
       already_compressed='true' # avoid re-compressing the files
     fi
     backend_exec save "${KEY}" "${ACTUAL_PATH}"
+    lower_level_updated='true' # to force saving higher levels
   else
     echo "Cache of ${LEVEL} already exists, skipping"
   fi
