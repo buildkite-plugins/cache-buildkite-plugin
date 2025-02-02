@@ -60,7 +60,7 @@ teardown() {
   run "$PWD/hooks/post-command"
 
   assert_failure
-  assert_output --partial 'Invalid cache level'
+  assert_output --partial 'Invalid levels in the save list'
 }
 
 @test "Invalid compression level fails" {
@@ -190,7 +190,7 @@ teardown() {
 
   assert_failure
 
-  assert_output --partial 'Invalid cache level unreal'
+  assert_output --partial 'Invalid levels in the save list'
   refute_output --partial 'Saving pipeline-level cache'
 }
 

@@ -27,28 +27,38 @@ if ! validate_compression "${COMPRESS}"; then
   exit 1
 fi
 
-SAVE_LEVELS=()
-if plugin_read_list_into_result SAVE; then
-  for LEVEL in "${result[@]}"; do
-    SAVE_LEVELS+=("${LEVEL}")
-
-    # this validates the level as well
-    KEY=$(build_key "${LEVEL}" "${CACHE_PATH}" "${COMPRESS}")
-
-    if [ "${LEVEL}" = 'file' ] && [ -z "$(plugin_read_config MANIFEST)" ]; then
-      echo "+++ 🚨 Missing manifest option in the cache plugin for file-level saving"
-      exit 1
-    fi
-  done
-else
+if ! plugin_read_list_into_result SAVE; then
   echo 'Cache not setup for saving'
   exit 0
+fi
+
+ORDERED_LEVELS=(file step branch pipeline all)
+SAVE_LEVELS=()
+
+# array intersection keeping the order of the first array
+for O_LEVEL in "${ORDERED_LEVELS[@]}"; do
+  for R_LEVEL in "${result[@]}"; do
+    if [ "${O_LEVEL}" = "${R_LEVEL}" ]; then
+      SAVE_LEVELS+=("${O_LEVEL}")
+    fi
+  done
+done
+
+if [ "${#SAVE_LEVELS[@]}" -ne "${#result[@]}" ]; then
+  echo 'Invalid levels in the save list'
+  exit 1
 fi
 
 ACTUAL_PATH="${CACHE_PATH}"
 
 for LEVEL in "${SAVE_LEVELS[@]}"; do
+  # this validates the level as well
   KEY=$(build_key "${LEVEL}" "${CACHE_PATH}" "${COMPRESS}")
+
+  if [ "${LEVEL}" = 'file' ] && [ -z "$(plugin_read_config MANIFEST)" ]; then
+    echo "+++ 🚨 Missing manifest option in the cache plugin for file-level saving"
+    exit 1
+  fi
 
   if [ "$(plugin_read_config FORCE 'false')" != 'false' ] ||
      [ "${lower_level_updated:-false}" = 'true' ] ||
