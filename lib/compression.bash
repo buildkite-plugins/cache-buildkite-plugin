@@ -32,31 +32,9 @@ compress() {
   local COMPRESSION=''
   COMPRESSION="$(plugin_read_config COMPRESSION 'none')"
 
-  echo "Compressing ${COMPRESSED_FILE} with ${COMPRESSION}..."
-
-  if [ "${COMPRESSION}" = 'tgz' ]; then
-    TAR_OPTS='cz'
-    if is_absolute_path "${COMPRESSED_FILE}"; then
-      TAR_OPTS="${TAR_OPTS}"P
-    fi
-
-    tar "${TAR_OPTS}"f "${FILE}" "${COMPRESSED_FILE}"
-  elif [ "${COMPRESSION}" = 'zip' ]; then
-    if is_absolute_path "${COMPRESSED_FILE}"; then
-      local COMPRESS_DIR
-      COMPRESS_DIR="$(dirname "${COMPRESSED_FILE}")"
-      ( # subshell to avoid changing the working directory
-        # shellcheck disable=SC2164 # we will exit anyway
-        cd "${COMPRESS_DIR}"
-        # because ZIP complains if the file does not end with .zip
-        zip -r "${FILE}.zip" "${COMPRESSED_FILE}"
-        mv "${FILE}.zip" "${FILE}"
-      )
-    else
-      # because ZIP complains if the file does not end with .zip
-      zip -r "${FILE}.zip" "${COMPRESSED_FILE}"
-      mv "${FILE}.zip" "${FILE}"
-    fi
+  if [ "${COMPRESSION}" != 'none' ]; then
+    echo "Compressing ${COMPRESSED_FILE} with ${COMPRESSION}..."
+    PATH="${PATH}:${DIR}/../compression" "${COMPRESSION}_wrapper" "compress" "${COMPRESSED_FILE}" "${FILE}"
   fi
 }
 
@@ -67,36 +45,8 @@ uncompress() {
   local COMPRESSION=''
   COMPRESSION="$(plugin_read_config COMPRESSION 'none')"
 
-  echo "Cache is compressed, uncompressing with ${COMPRESSION}..."
-
-  if [ "${COMPRESSION}" = 'tgz' ]; then
-    TAR_OPTS='xz'
-    if is_absolute_path "${RESTORE_PATH}"; then
-      TAR_OPTS="${TAR_OPTS}"P
-    fi
-
-    tar "${TAR_OPTS}"f "${FILE}" "${RESTORE_PATH}"
-  elif [ "${COMPRESSION}" = 'zip' ]; then
-    if is_absolute_path "${RESTORE_PATH}"; then
-      local RESTORE_DIR
-      RESTORE_DIR="$(dirname "${RESTORE_PATH}")"
-      ( # subshell to avoid changing the working directory
-        mkdir -p "${RESTORE_DIR}"
-        # shellcheck disable=SC2164 # we will exit anyway
-        cd "${RESTORE_DIR}"
-        mv "${FILE}" "${RESTORE_DIR}/compressed.zip"
-        unzip -o "compressed.zip"
-        rm "compressed.zip"
-      )
-    else
-      # because ZIP complains if the file does not end with .zip
-      mv "${FILE}" "${FILE}.zip"
-      unzip -o "${FILE}.zip"
-    fi
+  if [ "${COMPRESSION}" != 'none' ]; then
+    echo "Cache is compressed, uncompressing with ${COMPRESSION}..."
+    PATH="${PATH}:${DIR}/../compression" "${COMPRESSION}_wrapper" "decompress" "${FILE}" "${RESTORE_PATH}"
   fi
-}
-
-is_absolute_path() {
-  local FILEPATH="${1}"
-  [ "${FILEPATH:0:1}" = "/" ]
 }
