@@ -1,0 +1,34 @@
+#!/bin/bash
+
+OPERATION=${1?Operation not specified}
+SOURCE=${2?Source not specified}
+TARGET=${3?Target not specified}
+
+check_zstd() {
+  if command -v zstd &> /dev/null; then
+    echo "" > /dev/null
+  else
+    echo "zstd is not installed"
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+      echo "Try 'brew install zstd'"
+    else
+      echo "Try 'apt-get install zstd'"
+    fi
+    exit 1
+  fi
+}
+
+if [ "${OPERATION}" = "compress" ]; then
+    check_zstd
+
+    tar -cf - -C "${SOURCE}" . | zstd -o "${TARGET}"
+elif [ "${OPERATION}" = "decompress" ]; then
+    check_zstd
+    # -C requires that the target dir exists
+    mkdir -p "${TARGET}"
+
+    zstd -d -c "${SOURCE}" | tar -x -C "${TARGET}"
+else
+    echo "Invalid operation"
+    exit 1
+fi
