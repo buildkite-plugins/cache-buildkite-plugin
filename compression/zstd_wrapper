@@ -4,6 +4,10 @@ OPERATION=${1?Operation not specified}
 SOURCE=${2?Source not specified}
 TARGET=${3?Target not specified}
 
+is_absolute_path() {
+  [ "${1:0:1}" = "/" ]
+}
+
 check_zstd() {
   if command -v zstd &> /dev/null; then
     echo "" > /dev/null
@@ -19,15 +23,22 @@ check_zstd() {
 }
 
 if [ "${OPERATION}" = "compress" ]; then
-    check_zstd
-
-    tar -cf - -C "${SOURCE}" . | zstd -o "${TARGET}"
+  check_zstd
+  TAR_OPTS='-cf -'
+  if is_absolute_path "${SOURCE}"; then
+    TAR_OPTS="-P ${TAR_OPTS}"
+  fi
+  tar ${TAR_OPTS} "${SOURCE}" | zstd -o "${TARGET}"
 elif [ "${OPERATION}" = "decompress" ]; then
-    check_zstd
-    # -C requires that the target dir exists
-    mkdir -p "${TARGET}"
-
-    zstd -d -c "${SOURCE}" | tar -x -C "${TARGET}"
+  check_zstd
+  mkdir -p "${TARGET}"
+  TAR_OPTS='-xf -'
+  if is_absolute_path "${TARGET}"; then
+    TAR_OPTS="-P ${TAR_OPTS}"
+    zstd -d -c "${SOURCE}" | tar ${TAR_OPTS}
+  else
+    zstd -d -c "${SOURCE}" | tar ${TAR_OPTS} -C "${TARGET}"
+  fi
 else
     echo "Invalid operation"
     exit 1
