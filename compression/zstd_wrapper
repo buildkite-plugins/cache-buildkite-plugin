@@ -28,12 +28,12 @@ if [ "${OPERATION}" = "compress" ]; then
 elif [ "${OPERATION}" = "decompress" ]; then
   check_zstd
   mkdir -p "${TARGET}"
-  TAR_OPTS='-xf -'
+  TAR_OPTS=('-xf' '-')
   if is_absolute_path "${TARGET}"; then
-    TAR_OPTS="-P ${TAR_OPTS}"
-    zstd -d -c "${SOURCE}" | tar ${TAR_OPTS}
+    TAR_OPTS+="-P"
+    zstd -d -c "${SOURCE}" | tar "${TAR_OPTS[@]}"
   else
-    zstd -d -c "${SOURCE}" | tar ${TAR_OPTS} -C "${TARGET}"
+    zstd -d -c "${SOURCE}" | tar "${TAR_OPTS[@]}" -C "${TARGET}"
   fi
 else
     echo "Invalid operation"
