@@ -8,19 +8,15 @@ is_absolute_path() {
   [ "${1:0:1}" = "/" ]
 }
 
-check_zstd() {
-  if command -v zstd &> /dev/null; then
-    echo "" > /dev/null
+if ! command -v zstd &> /dev/null; then
+  echo "zstd is not installed"
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    echo "Try 'brew install zstd'"
   else
-    echo "zstd is not installed"
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-      echo "Try 'brew install zstd'"
-    else
-      echo "Try 'apt-get install zstd'"
-    fi
-    exit 1
+    echo "Try 'apt-get install zstd'"
   fi
-}
+  exit 1
+fi
 
 if [ "${OPERATION}" = "compress" ]; then
   check_zstd
