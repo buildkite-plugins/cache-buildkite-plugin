@@ -45,7 +45,7 @@ teardown() {
 
   assert_success
   assert_output --partial 'Cache hit at file level'
-  assert_output --partial 'Cache is compressed, uncompressing with tgz'
+  assert_output --partial 'Cache is compressed, decompressing with tgz'
   assert_output --partial "with options xzf"
 
   unstub cache_dummy
@@ -62,7 +62,7 @@ teardown() {
 
   assert_success
   assert_output --partial 'Cache hit at file level'
-  assert_output --partial 'Cache is compressed, uncompressing with tgz'
+  assert_output --partial 'Cache is compressed, decompressing with tgz'
 
   unstub cache_dummy
 }
@@ -79,7 +79,7 @@ teardown() {
 
   assert_success
   assert_output --partial 'Cache hit at step level'
-  assert_output --partial 'Cache is compressed, uncompressing with tgz'
+  assert_output --partial 'Cache is compressed, decompressing with tgz'
 
   unstub cache_dummy
 }
@@ -97,7 +97,7 @@ teardown() {
 
   assert_success
   assert_output --partial 'Cache hit at branch level'
-  assert_output --partial 'Cache is compressed, uncompressing with tgz'
+  assert_output --partial 'Cache is compressed, decompressing with tgz'
 
   unstub cache_dummy
 }
@@ -115,7 +115,7 @@ teardown() {
 
   assert_success
   assert_output --partial 'Cache hit at pipeline level'
-  assert_output --partial 'Cache is compressed, uncompressing with tgz'
+  assert_output --partial 'Cache is compressed, decompressing with tgz'
 
   unstub cache_dummy
 }
@@ -135,7 +135,7 @@ teardown() {
 
   assert_success
   assert_output --partial 'Cache hit at all level'
-  assert_output --partial 'Cache is compressed, uncompressing with tgz'
+  assert_output --partial 'Cache is compressed, decompressing with tgz'
 
   unstub cache_dummy
 }
@@ -153,7 +153,7 @@ teardown() {
 
   assert_success
   assert_output --partial 'Cache hit at branch level'
-  assert_output --partial 'Cache is compressed, uncompressing with tgz'
+  assert_output --partial 'Cache is compressed, decompressing with tgz'
 
   unstub cache_dummy
 }
@@ -170,7 +170,7 @@ teardown() {
 
   assert_success
   assert_output --partial 'Cache hit at file level'
-  assert_output --partial 'Cache is compressed, uncompressing with tgz...'
+  assert_output --partial 'Cache is compressed, decompressing with tgz...'
   assert_output --partial "with options xzPf"
 
   unstub cache_dummy

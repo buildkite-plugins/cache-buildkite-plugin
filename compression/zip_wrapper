@@ -1,0 +1,45 @@
+#!/bin/bash
+
+OPERATION=${1?Operation not specified}
+SOURCE=${2?Source not specified}
+TARGET=${3?Target not specified}
+
+is_absolute_path() {
+  [ "${1:0:1}" = "/" ]
+}
+
+if [ "${OPERATION}" = "compress" ]; then
+    if is_absolute_path "${SOURCE}"; then
+      COMPRESS_DIR="$(dirname "${SOURCE}")"
+      ( # subshell to avoid changing the working directory
+        # shellcheck disable=SC2164 # we will exit anyway
+        cd "${COMPRESS_DIR}"
+        # because ZIP complains if the file does not end with .zip
+        zip -r "${TARGET}.zip" "${SOURCE}"
+        mv "${TARGET}.zip" "${TARGET}"
+      )
+    else
+      # because ZIP complains if the file does not end with .zip
+      zip -r "${TARGET}.zip" "${SOURCE}"
+      mv "${TARGET}.zip" "${TARGET}"
+    fi
+elif [ "${OPERATION}" = "decompress" ]; then
+    if is_absolute_path "${TARGET}"; then
+      RESTORE_DIR="$(dirname "${TARGET}")"
+      ( # subshell to avoid changing the working directory
+        mkdir -p "${RESTORE_DIR}"
+        # shellcheck disable=SC2164 # we will exit anyway
+        cd "${RESTORE_DIR}"
+        mv "${SOURCE}" "${RESTORE_DIR}/compressed.zip"
+        unzip -o "compressed.zip"
+        rm "compressed.zip"
+      )
+    else
+      # because ZIP complains if the file does not end with .zip
+      mv "${SOURCE}" "${SOURCE}.zip"
+      unzip -o "${SOURCE}.zip"
+    fi
+else
+    echo "Invalid operation"
+    exit 1
+fi

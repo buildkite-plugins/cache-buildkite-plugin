@@ -22,10 +22,6 @@ if [ -z "${CACHE_PATH}" ] ; then
 fi
 
 COMPRESS=$(plugin_read_config COMPRESSION 'none')
-if ! validate_compression "${COMPRESS}"; then
-  echo "+++ 🚨 Invalid value for compression option"
-  exit 1
-fi
 
 if ! plugin_read_list_into_result SAVE; then
   echo 'Cache not setup for saving'

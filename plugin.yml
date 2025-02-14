@@ -17,10 +17,6 @@ configuration:
       type: string
     compression:
       type: string
-      enum:
-        - zip
-        - tar
-        - tgz
     force:
       type: boolean
     keep-compressed-artifacts:
