@@ -23,6 +23,8 @@ configuration:
         - tgz
     force:
       type: boolean
+    keep-compressed-artifacts:
+      type: boolean
     manifest:
       oneOf:
         - type: string
