@@ -19,16 +19,16 @@ if ! command -v zstd &> /dev/null; then
 fi
 
 if [ "${OPERATION}" = "compress" ]; then
-  TAR_OPTS=('-cf' '-')
+  TAR_OPTS=('-c' '-f' '-')
   if is_absolute_path "${SOURCE}"; then
-    TAR_OPTS+=("-P")
+    TAR_OPTS+=('-P')
   fi
   tar "${TAR_OPTS[@]}" "${SOURCE}" | zstd -o "${TARGET}"
 elif [ "${OPERATION}" = "decompress" ]; then
   mkdir -p "${TARGET}"
-  TAR_OPTS=('-xf' '-')
+  TAR_OPTS=('-x' '-f' '-')
   if is_absolute_path "${TARGET}"; then
-    TAR_OPTS+=("-P")
+    TAR_OPTS+=('-P')
     zstd -d -c "${SOURCE}" | tar "${TAR_OPTS[@]}"
   else
     zstd -d -c "${SOURCE}" | tar "${TAR_OPTS[@]}" -C "${TARGET}"
