@@ -69,7 +69,11 @@ Setting the `BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS` environment variable wi
 
 Allows for the cached file/folder to be saved/restored as a single file. You will need to make sure to use the same compression when saving and restoring or it will cause a cache miss.
 
-Assuming the underlying executables are available, the allowed values are:
+The value `none` is equivalent to not specifying a compression. Any other value (`X`) will assume that an executable wrapper script exists in the agent's `PATH` to handle both compression and decompression with the following protocol:
+* `X_wrapper compress SOURCE TARGET`: compress the file/folder `SOURCE` into the `TARGET` file
+* `X_wrapper decompress SOURCE TARGET`: decompress the artifact `SOURCE` into `TARGET` destination
+
+The plugin includes wrappers to provide both examples and backwards-compatibility:
 * `tgz`: `tar` with gzip compression
 * `zip`: `(un)zip` compression
 
