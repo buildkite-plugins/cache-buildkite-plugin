@@ -76,6 +76,7 @@ The value `none` is equivalent to not specifying a compression. Any other value 
 The plugin includes wrappers to provide both examples and backwards-compatibility:
 * `tgz`: `tar` with gzip compression
 * `zip`: `(un)zip` compression
+* `zstd`: `zstd` compression
 
 ### `force` (boolean, save only)
 
