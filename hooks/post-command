@@ -22,51 +22,59 @@ if [ -z "${CACHE_PATH}" ] ; then
 fi
 
 COMPRESS=$(plugin_read_config COMPRESSION 'none')
-if ! validate_compression "${COMPRESS}"; then
-  echo "+++ 🚨 Invalid value for compression option"
-  exit 1
-fi
 
-SAVE_LEVELS=()
-if plugin_read_list_into_result SAVE; then
-  for LEVEL in "${result[@]}"; do
-    SAVE_LEVELS+=("${LEVEL}")
-
-    # this validates the level as well
-    KEY=$(build_key "${LEVEL}" "${CACHE_PATH}" "${COMPRESS}")
-
-    if [ "${LEVEL}" = 'file' ] && [ -z "$(plugin_read_config MANIFEST)" ]; then
-      echo "+++ 🚨 Missing manifest option in the cache plugin for file-level saving"
-      exit 1
-    fi
-  done
-else
+if ! plugin_read_list_into_result SAVE; then
   echo 'Cache not setup for saving'
   exit 0
 fi
 
+ORDERED_LEVELS=(file step branch pipeline all)
+SAVE_LEVELS=()
+
+# array intersection keeping the order of the first array
+for O_LEVEL in "${ORDERED_LEVELS[@]}"; do
+  for R_LEVEL in "${result[@]}"; do
+    if [ "${O_LEVEL}" = "${R_LEVEL}" ]; then
+      SAVE_LEVELS+=("${O_LEVEL}")
+    fi
+  done
+done
+
+if [ "${#SAVE_LEVELS[@]}" -ne "${#result[@]}" ]; then
+  echo 'Invalid levels in the save list'
+  exit 1
+fi
+
 ACTUAL_PATH="${CACHE_PATH}"
-already_compressed='false'
-needs_compression() {
-  compression_active && [ "$already_compressed" = 'false' ]
-}
-do_compress() {
-  ACTUAL_PATH=$(mktemp)
-  compress "${CACHE_PATH}" "${ACTUAL_PATH}"
-  already_compressed='true'
-}
 
 for LEVEL in "${SAVE_LEVELS[@]}"; do
+  # this validates the level as well
   KEY=$(build_key "${LEVEL}" "${CACHE_PATH}" "${COMPRESS}")
 
+  if [ "${LEVEL}" = 'file' ] && [ -z "$(plugin_read_config MANIFEST)" ]; then
+    echo "+++ 🚨 Missing manifest option in the cache plugin for file-level saving"
+    exit 1
+  fi
+
   if [ "$(plugin_read_config FORCE 'false')" != 'false' ] ||
+     [ "${lower_level_updated:-false}" = 'true' ] ||
      ! backend_exec exists "${KEY}"; then
     echo "Saving ${LEVEL}-level cache of ${CACHE_PATH}"
-    if needs_compression; then
-      do_compress
+    if compression_active && [ "${already_compressed:-false}" = 'false' ]; then
+      ACTUAL_PATH=$(mktemp)
+      compress "${CACHE_PATH}" "${ACTUAL_PATH}"
+      already_compressed='true' # avoid re-compressing the files
     fi
     backend_exec save "${KEY}" "${ACTUAL_PATH}"
+    lower_level_updated='true' # to force saving higher levels
   else
     echo "Cache of ${LEVEL} already exists, skipping"
   fi
 done
+
+# remove temporary compressed artifacts
+if [ "$(plugin_read_config KEEP_COMPRESSED_ARTIFACTS 'false')" = 'false' ]; then
+  if compression_active && [ -e "${ACTUAL_PATH}" ]; then
+    rm -rf "${ACTUAL_PATH}"
+  fi
+fi

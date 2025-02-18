@@ -13,7 +13,7 @@ steps:
   - label: ':nodejs: Install dependencies'
     command: npm ci
     plugins:
-      - cache#v1.4.0:
+      - cache#v1.5.0:
           manifest: package-lock.json
           path: node_modules
           restore: file
@@ -65,28 +65,39 @@ You also need the agent to have access to the following defined environment vari
 
 Setting the `BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS` environment variable will reduce logging of file operations towards S3.
 
-### `compression` (string, optional)
+### `compression` (string)
 
 Allows for the cached file/folder to be saved/restored as a single file. You will need to make sure to use the same compression when saving and restoring or it will cause a cache miss.
 
-Assuming the underlying executables are available, the allowed values are:
+The value `none` is equivalent to not specifying a compression. Any other value (`X`) will assume that an executable wrapper script exists in the agent's `PATH` to handle both compression and decompression with the following protocol:
+* `X_wrapper compress SOURCE TARGET`: compress the file/folder `SOURCE` into the `TARGET` file
+* `X_wrapper decompress SOURCE TARGET`: decompress the artifact `SOURCE` into `TARGET` destination
+
+The plugin includes wrappers to provide both examples and backwards-compatibility:
 * `tgz`: `tar` with gzip compression
 * `zip`: `(un)zip` compression
+* `zstd`: `zstd` compression
 
-### `force` (boolean, optional, save only)
+### `force` (boolean, save only)
 
 Force saving the cache even if it exists. Default: `false`.
 
-### `manifest` (string, required if using `file` caching level)
+### `keep-compressed-artifacts` (boolean)
 
-A path to a file or folder that will be hashed to create file-level caches.
+Remove compression artifacts after they are used. Default: `false`.
+
+Note that if you turn on this option, every execution will create temporary files that may fill up your agent's storage.
+
+### `manifest` (string or list of strings, required if using `file` caching level)
+
+One or more paths to files or folders that will be hashed to create and restore file-level caches. If multiple files or folders are specified its ordering does not matter.
 
 It will cause an unrecoverable error if either `save` or `restore` are set to `file` and this option is not specified.
 
 ## Caching levels
 
 This plugin uses the following hierarchical structure for caches to be valid (meaning usable), from the most specific to the more general:
-* `file`: only as long as a manifest file does not change (see the `manifest` option)
+* `file`: only as long as the contents of the files or folders of the `manifest` option do not change
 * `step`: valid only for the current step
 * `branch`: when the pipeline executes in the context of the current branch
 * `pipeline`: all builds and steps of the pipeline
@@ -131,7 +142,7 @@ steps:
   - label: ':nodejs: Install dependencies'
     command: npm ci
     plugins:
-      - cache#v1.4.0:
+      - cache#v1.5.0:
           manifest: package-lock.json
           path: node_modules
           restore: pipeline
@@ -142,7 +153,7 @@ steps:
   - label: ':test_tube: Run tests'
     command: npm test # does not save cache, not necessary
     plugins:
-      - cache#v1.4.0:
+      - cache#v1.5.0:
           manifest: package-lock.json
           path: node_modules
           restore: file
@@ -151,7 +162,7 @@ steps:
     if: build.branch == "master"
     command: npm run deploy
     plugins:
-      - cache#v1.4.0:
+      - cache#v1.5.0:
           manifest: package-lock.json
           path: node_modules
           restore: file

@@ -23,9 +23,12 @@ sha() {
   echo "$shasum"
 }
 
-# Hashes files and directories recursively
+# Hashes multiple files and directories recursively
 hash_files() {
-  find "$@" -type f -print0 \
+  ( for FILE in "$@"; do
+      find "$FILE" -type f -print0
+    done
+  ) | sort -z \
     | xargs -0 "$(sha)" \
     | cut -d\  -f1 \
     | sort \
@@ -39,7 +42,8 @@ build_key() {
   local COMPRESSION="${3:-}"
 
   if [ "${LEVEL}" = 'file' ]; then
-    BASE="$(hash_files "$(plugin_read_config MANIFEST)")"
+    plugin_read_list_into_result MANIFEST
+    BASE="$(hash_files "${result[@]}")"
   elif [ "${LEVEL}" = 'step' ]; then
     BASE="${BUILDKITE_PIPELINE_SLUG}${BUILDKITE_LABEL}"
   elif [ "${LEVEL}" = 'branch' ]; then

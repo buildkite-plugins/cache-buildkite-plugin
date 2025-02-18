@@ -17,14 +17,16 @@ configuration:
       type: string
     compression:
       type: string
-      enum:
-        - zip
-        - tar
-        - tgz
     force:
       type: boolean
+    keep-compressed-artifacts:
+      type: boolean
     manifest:
-      type: string
+      oneOf:
+        - type: string
+        - type: array
+          items:
+            type: string
     path:
       type: string
     restore:

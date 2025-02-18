@@ -60,17 +60,7 @@ teardown() {
   run "$PWD/hooks/post-command"
 
   assert_failure
-  assert_output --partial 'Invalid cache level'
-}
-
-@test "Invalid compression level fails" {
-  export BUILDKITE_PLUGIN_CACHE_SAVE=all
-  export BUILDKITE_PLUGIN_CACHE_COMPRESSION=invalid
-
-  run "$PWD/hooks/post-command"
-
-  assert_failure
-  assert_output --partial 'Invalid value for compression option'
+  assert_output --partial 'Invalid levels in the save list'
 }
 
 @test "File-based cache with no manifest fails" {
@@ -190,7 +180,7 @@ teardown() {
 
   assert_failure
 
-  assert_output --partial 'Invalid cache level unreal'
+  assert_output --partial 'Invalid levels in the save list'
   refute_output --partial 'Saving pipeline-level cache'
 }
 
@@ -205,6 +195,49 @@ teardown() {
 
   assert_success
   refute_output --partial 'Saving all-level cache'
+
+  unstub cache_dummy
+}
+
+@test "Multiple level saving not forced" {
+  export BUILDKITE_PLUGIN_CACHE_FORCE=false
+
+  export BUILDKITE_PLUGIN_CACHE_SAVE_0=all
+  export BUILDKITE_PLUGIN_CACHE_SAVE_1=pipeline
+
+  stub cache_dummy \
+    "exists \* \* : exit 0" \
+    "exists \* \* : exit 1" \
+    "save \* \* : echo saving \$3 in \$2"
+
+  run "$PWD/hooks/post-command"
+
+  assert_success
+  assert_output --partial 'Saving all-level cache'
+  refute_output --partial 'Saving pipeline-level cache'
+
+  unstub cache_dummy
+}
+
+@test "Multiple level saving lower level change forces higher levels" {
+  export BUILDKITE_PLUGIN_CACHE_FORCE=false
+
+  export BUILDKITE_PLUGIN_CACHE_SAVE_0=all
+  export BUILDKITE_PLUGIN_CACHE_SAVE_1=pipeline
+  export BUILDKITE_PLUGIN_CACHE_SAVE_2=step
+
+  stub cache_dummy \
+    "exists \* \* : exit 0" \
+    "exists \* \* : exit 1" \
+    "save \* \* : echo saving \$3 in \$2" \
+    "save \* \* : echo saving \$3 in \$2"
+
+  run "$PWD/hooks/post-command"
+
+  assert_success
+  assert_output --partial 'Saving all-level cache'
+  assert_output --partial 'Saving pipeline-level cache'
+  refute_output --partial 'Saving step-level cache'
 
   unstub cache_dummy
 }
