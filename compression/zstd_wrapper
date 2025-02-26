@@ -10,7 +10,7 @@ is_absolute_path() {
 
 if ! tar --help | grep -q -- "--zstd"; then
   echo "tar does not support zstd compression"
-  echo "You need a version of tar with zstd support"
+  echo "You need a version of tar with zstd support (tar 1.31 or higher)"
   exit 1
 fi
 
