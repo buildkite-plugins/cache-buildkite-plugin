@@ -15,19 +15,19 @@ if ! tar --help | grep -q -- "--zstd"; then
 fi
 
 if [ "${OPERATION}" = "compress" ]; then
-    TAR_OPTS='c --zstd'
+    TAR_OPTS=('-c' '--zstd')
     if is_absolute_path "${SOURCE}"; then
-      TAR_OPTS="${TAR_OPTS}"P
+      TAR_OPTS+=('-P')
     fi
 
-    tar "${TAR_OPTS}"f "${TARGET}" "${SOURCE}"
+    tar "${TAR_OPTS[@]}" -f "${TARGET}" "${SOURCE}"
 elif [ "${OPERATION}" = "decompress" ]; then
-    TAR_OPTS='x --zstd'
+    TAR_OPTS=('-x' '--zstd')
     if is_absolute_path "${TARGET}"; then
-      TAR_OPTS="${TAR_OPTS}"P
+      TAR_OPTS+=('-P')
     fi
 
-    tar "${TAR_OPTS}"f "${SOURCE}" "${TARGET}"
+    tar "${TAR_OPTS[@]}" -f "${SOURCE}" "${TARGET}"
 else
     echo "Invalid operation"
     exit 1
