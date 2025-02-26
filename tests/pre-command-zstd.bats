@@ -3,7 +3,6 @@
 # To debug stubs, uncomment these lines:
 # export CACHE_DUMMY_STUB_DEBUG=/dev/tty
 # export TAR_STUB_DEBUG=/dev/tty
-# export ZSTD_STUB_DEBUG=/dev/tty
 
 setup() {
   load "${BATS_PLUGIN_PATH}/load.bash"
@@ -23,18 +22,14 @@ setup() {
   export BUILDKITE_ORGANIZATION_SLUG="bk-cache-test"
   export BUILDKITE_PIPELINE_SLUG="cache-pipeline"
 
-  # stub is the same for all tests
-  stub zstd \
-    "-d \* \* : echo uncompressed \$2 into \$3"
-
-  stub tar "echo called tar with options \$@ and input; cat"
-
+  stub tar \
+    "--help : echo '--zstd'" \
+    "echo called tar with options \$@"
 }
 
 teardown() {
   rm -rf tests/data
 
-  unstub zstd
   unstub tar
 }
 

@@ -2,7 +2,7 @@
 
 # To debug stubs, uncomment these lines:
 # export CACHE_DUMMY_STUB_DEBUG=/dev/tty
-# export ZSTD_STUB_DEBUG=/dev/tty
+# export TAR_STUB_DEBUG=/dev/tty
 
 setup() {
   load "${BATS_PLUGIN_PATH}/load.bash"
@@ -26,19 +26,19 @@ setup() {
   export BUILDKITE_ORGANIZATION_SLUG="bk-cache-test"
   export BUILDKITE_PIPELINE_SLUG="cache-pipeline"
 
-  # stubs are the same for every test
-  stub zstd \
-    "\* \* : echo compressed stdin into \$2 with options \$1"
-
   stub cache_dummy \
     "save \* \* : echo saving \$3 in \$2"
+
+  stub tar \
+    "--help : echo '--zstd'" \
+    "echo called tar with options \$@"
 }
 
 teardown() {
   rm -rf tests/data
 
   unstub cache_dummy
-  unstub zstd
+  unstub tar
 }
 
 @test "File-level saving with compression" {
@@ -50,7 +50,7 @@ teardown() {
   assert_success
   assert_output --partial 'Saving file-level cache'
   assert_output --partial 'Compressing tests/data/my_files with zstd'
-  assert_output --partial "with options -o"
+  assert_output --partial "with options -c --zstd"
 }
 
 @test "Step-level saving" {
@@ -119,7 +119,7 @@ teardown() {
   assert_success
   assert_output --partial 'Saving pipeline-level cache'
   assert_output --partial "Compressing ${BUILDKITE_PLUGIN_CACHE_PATH} with zstd..."
-  assert_output --partial "with options -o"
+  assert_output --partial "with options -c --zstd -P"
 
   rm -rf "${BUILDKITE_PLUGIN_CACHE_PATH}"
 }
