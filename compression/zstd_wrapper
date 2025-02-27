@@ -8,31 +8,26 @@ is_absolute_path() {
   [ "${1:0:1}" = "/" ]
 }
 
-if ! command -v zstd &> /dev/null; then
-  echo "zstd is not installed"
-  if [[ "$OSTYPE" == "darwin"* ]]; then
-    echo "Try 'brew install zstd'"
-  else
-    echo "Try 'apt-get install zstd'"
-  fi
+if ! tar --help | grep -q -- "--zstd"; then
+  echo "tar does not support zstd compression"
+  echo "You need a version of tar with zstd support (tar 1.31 or higher)"
   exit 1
 fi
 
 if [ "${OPERATION}" = "compress" ]; then
-  TAR_OPTS=('-c' '-f' '-')
-  if is_absolute_path "${SOURCE}"; then
-    TAR_OPTS+=('-P')
-  fi
-  tar "${TAR_OPTS[@]}" "${SOURCE}" | zstd -o "${TARGET}"
+    TAR_OPTS=('-c' '--zstd')
+    if is_absolute_path "${SOURCE}"; then
+      TAR_OPTS+=('-P')
+    fi
+
+    tar "${TAR_OPTS[@]}" -f "${TARGET}" "${SOURCE}"
 elif [ "${OPERATION}" = "decompress" ]; then
-  mkdir -p "${TARGET}"
-  TAR_OPTS=('-x' '-f' '-')
-  if is_absolute_path "${TARGET}"; then
-    TAR_OPTS+=('-P')
-    zstd -d -c "${SOURCE}" | tar "${TAR_OPTS[@]}"
-  else
-    zstd -d -c "${SOURCE}" | tar "${TAR_OPTS[@]}" -C "${TARGET}"
-  fi
+    TAR_OPTS=('-x' '--zstd')
+    if is_absolute_path "${TARGET}"; then
+      TAR_OPTS+=('-P')
+    fi
+
+    tar "${TAR_OPTS[@]}" -f "${SOURCE}" "${TARGET}"
 else
     echo "Invalid operation"
     exit 1
