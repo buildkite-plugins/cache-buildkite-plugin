@@ -19,7 +19,7 @@ MAX_LEVEL=$(plugin_read_config RESTORE 'no')
 if [ "${MAX_LEVEL}" = 'no' ]; then
   echo 'Cache not setup for restoring'
   exit 0
-elif [ "${MAX_LEVEL}" = 'file' ] && [ -z "$(plugin_read_config MANIFEST)" ]; then
+elif [ "${MAX_LEVEL}" = 'file' ] && [ -z "$(plugin_read_list MANIFEST)" ]; then
   echo "+++ 🚨 Missing manifest option in the cache plugin for file-level restore"
   exit 1
 fi
