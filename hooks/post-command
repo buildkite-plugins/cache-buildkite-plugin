@@ -51,7 +51,7 @@ for LEVEL in "${SAVE_LEVELS[@]}"; do
   # this validates the level as well
   KEY=$(build_key "${LEVEL}" "${CACHE_PATH}" "${COMPRESS}")
 
-  if [ "${LEVEL}" = 'file' ] && [ -z "$(plugin_read_config MANIFEST)" ]; then
+  if [ "${LEVEL}" = 'file' ] && [ -z "$(plugin_read_list MANIFEST)" ]; then
     echo "+++ 🚨 Missing manifest option in the cache plugin for file-level saving"
     exit 1
   fi
