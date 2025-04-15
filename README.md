@@ -88,6 +88,34 @@ Remove compression artifacts after they are used. Default: `false`.
 
 Note that if you turn on this option, every execution will create temporary files that may fill up your agent's storage.
 
+### `key-extra`
+
+Additional data used to compute the cache key. You can use this additional parameter to further differentiate within a given level.
+
+For example when used in conjunction with a build matrix:
+
+```yaml
+steps:
+  - matrix:
+      - "darwin"
+      - "Linux"
+      - "Windows"
+    label: "{{matrix}} build"
+    command: "GOOS={{matrix}} go build"
+    env:
+      os: "{{matrix}}"
+      GOMODCACHE: pkg/cache
+    plugins:
+      - cache#v1.5.2:
+          path: pkg/cache
+          manifest:
+            - go.mod
+            - go.sum
+          restore: file
+          save: file
+          key-extra: "{{matrix}}
+```
+
 ### `manifest` (string or list of strings, required if using `file` caching level)
 
 One or more paths to files or folders that will be hashed to create and restore file-level caches. If multiple files or folders are specified its ordering does not matter.
@@ -104,6 +132,8 @@ This plugin uses the following hierarchical structure for caches to be valid (me
 * `all`: all the time
 
 When restoring from cache, **all levels, in the described order, up to the one specified** will be checked. The first one available will be restored and no further levels or checks will be made.
+
+Note: you can use the [`key-extra`](#key-extra) option to further differentiate within a level
 
 ## Customizable backends
 
