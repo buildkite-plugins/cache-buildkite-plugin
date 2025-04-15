@@ -90,6 +90,36 @@ teardown() {
   refute_output "${EMPTY_FILE}"
   assert_output "${MODIFIED_FILE}"
 
+  # using extra data changes the key
+  export BUILDKITE_PLUGIN_CACHE_KEY_EXTRA=extra
+
+  run build_key file FOLDER
+  EXTRA_KEY="${output}"
+
+  assert_success
+  refute_output "${MODIFIED_FILE}"
+  refute_output "${EMPTY_FILE}"
+
+  # different extra data changes the key
+  export BUILDKITE_PLUGIN_CACHE_KEY_EXTRA=other_extra
+
+  run build_key file FOLDER
+
+  assert_success
+
+  refute_output "${MODIFIED_FILE}"
+  refute_output "${EMPTY_FILE}"
+  refute_output "${EXTRA_KEY}"
+
+  # empty extra data returns key to expected
+  export BUILDKITE_PLUGIN_CACHE_KEY_EXTRA=''
+  run build_key file FOLDER
+
+  assert_success
+  assert_output "${MODIFIED_FILE}"
+  refute_output "${EMPTY_FILE}"
+  refute_output "${EXTRA_KEY}"
+
   rm test.file
   rm -rf FOLDER
   rm other.file
@@ -131,6 +161,36 @@ teardown() {
   refute_output "${EMPTY_FOLDER}"
   assert_output "${MODIFIED_FOLDER}"
 
+  # using extra data changes the key
+  export BUILDKITE_PLUGIN_CACHE_KEY_EXTRA=extra
+
+  run build_key file FOLDER
+  EXTRA_KEY="${output}"
+
+  assert_success
+  refute_output "${MODIFIED_FOLDER}"
+  refute_output "${EMPTY_FOLDER}"
+
+  # different extra data changes the key
+  export BUILDKITE_PLUGIN_CACHE_KEY_EXTRA=other_extra
+
+  run build_key file FOLDER
+
+  assert_success
+  refute_output "${MODIFIED_FOLDER}"
+  refute_output "${EMPTY_FOLDER}"
+  refute_output "${EXTRA_KEY}"
+
+  # empty extra data returns key to expected
+  export BUILDKITE_PLUGIN_CACHE_KEY_EXTRA=''
+
+  run build_key file FOLDER
+
+  assert_success
+  assert_output "${MODIFIED_FOLDER}"
+  refute_output "${EMPTY_FOLDER}"
+  refute_output "${EXTRA_KEY}"
+
   rm -rf test.folder
   rm -rf FOLDER
 }
@@ -153,4 +213,33 @@ teardown() {
   run build_key file FOLDER another_thing
   assert_success
   refute_output "${GENERATED_KEY}"
+
+  # extra data changes the key
+  export BUILDKITE_PLUGIN_CACHE_KEY_EXTRA=extra
+
+  run build_key file FOLDER something
+  EXTRA_KEY="${output}"
+
+  assert_success
+  refute_output "${GENERATED_KEY}"
+  refute_output "${EMPTY_KEY}"
+
+  # different extra data changes the key
+  export BUILDKITE_PLUGIN_CACHE_KEY_EXTRA=other_extra
+  run build_key file FOLDER something
+
+  assert_success
+  refute_output "${GENERATED_KEY}"
+  refute_output "${EMPTY_KEY}"
+  refute_output "${EXTRA_KEY}"
+
+  # empty extra data returns key to expected
+  export BUILDKITE_PLUGIN_CACHE_KEY_EXTRA=''
+  run build_key file FOLDER something
+
+  assert_success
+  assert_output "${GENERATED_KEY}"
+  refute_output "${EMPTY_KEY}"
+  refute_output "${EXTRA_KEY}"
+
 }
