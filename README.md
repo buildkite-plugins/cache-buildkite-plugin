@@ -113,7 +113,7 @@ steps:
             - go.sum
           restore: file
           save: file
-          key-extra: "{{matrix}}
+          key-extra: "{{matrix}}"
 ```
 
 ### `manifest` (string or list of strings, required if using `file` caching level)
