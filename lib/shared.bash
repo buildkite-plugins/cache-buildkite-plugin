@@ -40,6 +40,7 @@ build_key() {
   local LEVEL="$1"
   local CACHE_PATH="$2"
   local COMPRESSION="${3:-}"
+  local EXTRA="${BUILDKITE_PLUGIN_CACHE_KEY_EXTRA:-}"
 
   if [ "${LEVEL}" = 'file' ]; then
     plugin_read_list_into_result MANIFEST
@@ -57,7 +58,7 @@ build_key() {
     exit 1
   fi
 
-  echo "cache-${LEVEL}-${BASE}-${CACHE_PATH}-${COMPRESSION}" | "$(sha)" | cut -d\  -f1
+  echo "cache-${LEVEL}-${BASE}-${CACHE_PATH}-${COMPRESSION}${EXTRA}" | "$(sha)" | cut -d\  -f1
 }
 
 backend_exec() {
