@@ -31,7 +31,7 @@ build_key "${MAX_LEVEL}" "${RESTORE_PATH}" >/dev/null # to validate the level
 SORTED_LEVELS=(file step branch pipeline all)
 
 for CURRENT_LEVEL in "${SORTED_LEVELS[@]}"; do
-  if [ "${CURRENT_LEVEL}" = 'file' ] && [ -z "$(plugin_read_config MANIFEST)" ]; then
+  if [ "${CURRENT_LEVEL}" = 'file' ] && [ -z "$(plugin_read_list MANIFEST)" ]; then
     continue
   fi
 
