@@ -21,6 +21,8 @@ configuration:
       type: boolean
     keep-compressed-artifacts:
       type: boolean
+    key-extra:
+      type: string
     manifest:
       oneOf:
         - type: string
