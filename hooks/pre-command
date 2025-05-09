@@ -55,7 +55,7 @@ for CURRENT_LEVEL in "${SORTED_LEVELS[@]}"; do
 
     exit 0
   elif [ "${CURRENT_LEVEL}" = "${MAX_LEVEL}" ]; then
-    echo "Cache miss up to ${CURRENT_LEVEL}-level, sorry"
+    echo "Cache miss up to ${CURRENT_LEVEL}-level for ${RESTORE_PATH}, sorry"
     break
   fi
 done
