@@ -81,3 +81,27 @@ setup() {
 
   unstub dummy_decompress_wrapper
 }
+
+@test 'cleanup_compression_tempfile works' {
+  touch temp_file
+
+  # by default it removes the file
+  run cleanup_compression_tempfile temp_file
+  assert_success
+  assert [ ! -e  temp_file ]
+
+  # if we want to keep the file, it should not be removed
+  export BUILDKITE_PLUGIN_CACHE_KEEP_COMPRESSED_ARTIFACTS=true
+  touch temp_file
+
+  run cleanup_compression_tempfile temp_file
+  assert_success
+  assert [ -e  temp_file ]
+
+  # but we can also ask specifically to have it removed
+  export BUILDKITE_PLUGIN_CACHE_KEEP_COMPRESSED_ARTIFACTS=false
+
+  run cleanup_compression_tempfile temp_file
+  assert_success
+  assert [ ! -e  temp_file ]
+}
