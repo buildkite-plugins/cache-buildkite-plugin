@@ -74,7 +74,7 @@ done
 
 # remove temporary compressed artifacts
 if [ "$(plugin_read_config KEEP_COMPRESSED_ARTIFACTS 'false')" = 'false' ]; then
-  if compression_active && [ "${already_compressed}" == 'true' ] && [ -e "${ACTUAL_PATH}" ]; then
+  if compression_active && [ "${already_compressed:-false}" == 'true' ] && [ -e "${ACTUAL_PATH}" ]; then
     rm -rf "${ACTUAL_PATH}"
   fi
 fi
