@@ -37,3 +37,11 @@ decompress() {
     PATH="${PATH}:${DIR}/../compression" "${COMPRESSION}_wrapper" "decompress" "${FILE}" "${RESTORE_PATH}"
   fi
 }
+
+cleanup_compression_tempfile() {
+  FILE="$1"
+
+  if [ "$(plugin_read_config KEEP_COMPRESSED_ARTIFACTS 'false')" = 'false' ]; then
+    rm -rf "${FILE}"
+  fi
+}

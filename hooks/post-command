@@ -62,6 +62,12 @@ for LEVEL in "${SAVE_LEVELS[@]}"; do
     echo "Saving ${LEVEL}-level cache of ${CACHE_PATH}"
     if compression_active && [ "${already_compressed:-false}" = 'false' ]; then
       ACTUAL_PATH=$(mktemp)
+
+      # TERM in case it is cancelled
+      # EXIT when the script ends
+      # shellcheck disable=SC2064 # we want the expansion to happen now
+      trap "cleanup_compression_tempfile '${ACTUAL_PATH}'" TERM EXIT
+
       compress "${CACHE_PATH}" "${ACTUAL_PATH}"
       already_compressed='true' # avoid re-compressing the files
     fi
@@ -71,10 +77,3 @@ for LEVEL in "${SAVE_LEVELS[@]}"; do
     echo "Cache of ${LEVEL} already exists, skipping"
   fi
 done
-
-# remove temporary compressed artifacts
-if [ "$(plugin_read_config KEEP_COMPRESSED_ARTIFACTS 'false')" = 'false' ]; then
-  if compression_active && [ "${already_compressed:-false}" == 'true' ] && [ -e "${ACTUAL_PATH}" ]; then
-    rm -rf "${ACTUAL_PATH}"
-  fi
-fi
