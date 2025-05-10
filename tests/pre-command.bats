@@ -69,7 +69,7 @@ teardown() {
   run "$PWD/hooks/pre-command"
 
   assert_success
-  assert_output --partial 'Cache miss up to file-level, sorry'
+  assert_output --partial 'Cache miss up to file-level'
 
   unstub cache_dummy
 }
@@ -84,7 +84,7 @@ teardown() {
   run "$PWD/hooks/pre-command"
 
   assert_success
-  assert_output --partial 'Cache miss up to step-level, sorry'
+  assert_output --partial 'Cache miss up to step-level'
 
   unstub cache_dummy
 }
@@ -99,7 +99,7 @@ teardown() {
   run "$PWD/hooks/pre-command"
 
   assert_success
-  assert_output --partial 'Cache miss up to step-level, sorry'
+  assert_output --partial 'Cache miss up to step-level'
 
   unstub cache_dummy
 }
@@ -115,7 +115,7 @@ teardown() {
   run "$PWD/hooks/pre-command"
 
   assert_success
-  assert_output --partial 'Cache miss up to branch-level, sorry'
+  assert_output --partial 'Cache miss up to branch-level'
 
   unstub cache_dummy
 }
@@ -131,7 +131,7 @@ teardown() {
   run "$PWD/hooks/pre-command"
 
   assert_success
-  assert_output --partial 'Cache miss up to pipeline-level, sorry'
+  assert_output --partial 'Cache miss up to pipeline-level'
 
   unstub cache_dummy
 }
@@ -149,7 +149,7 @@ teardown() {
   run "$PWD/hooks/pre-command"
 
   assert_success
-  assert_output --partial 'Cache miss up to all-level, sorry'
+  assert_output --partial 'Cache miss up to all-level'
 
   unstub cache_dummy
 }
