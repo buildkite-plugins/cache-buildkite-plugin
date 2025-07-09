@@ -20,6 +20,14 @@ steps:
           save: file
 ```
 
+## Dependencies
+The plugin supports various backends and compression algorithms, and some environments (such as Docker containers based on Alpine Linux), may not have all of the dependencies needed to use the plugin out of the box. Ensure that the necessary dependencies are installed in the agent environment or container before using this plugin.
+
+- `zstd` for zstd compression
+- `tar` for tar compression
+- `zip/unzip` for zip compression
+- `aws` AWS CLI for reading and writing to an AWS S3 backend
+
 ## Mandatory parameters
 
 ### `path` (string)
