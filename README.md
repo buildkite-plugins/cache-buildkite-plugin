@@ -20,6 +20,15 @@ steps:
           save: file
 ```
 
+## Differences from Hosted Agents Cache Volumes
+
+If you're using [Buildkite Hosted Agents](https://buildkite.com/docs/pipelines/hosted-agents), you also have access to [Hosted Agents Cache Volumes](https://buildkite.com/docs/pipelines/hosted-agents/cache-volumes). This cache plugin differs from Hosted Agents Cache Volumes in several ways:
+
+- **Availability**: Works with both self-hosted agents and Hosted Agents (Hosted Agents Cache Volumes are exclusive to Hosted Agents)
+- **Data persistence**: Provides reliable, durable storage via backends like S3 (Hosted Agents Cache Volumes should not be relied upon for durable data storage)
+- **Retention**: Offers flexible retention policies (Hosted Agents Cache Volumes have a retention of 14 days from last use)
+- **Cache invalidation**: Supports content-based invalidation using file manifests (Hosted Agents Cache Volumes use simple path-based caching)
+
 ## Dependencies
 The plugin supports various backends and compression algorithms, and some environments (such as Docker containers based on Alpine Linux), may not have all of the dependencies needed to use the plugin out of the box. Ensure that the necessary dependencies are installed in the agent environment or container before using this plugin.
 
