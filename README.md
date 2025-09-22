@@ -71,6 +71,30 @@ The `BUILDKITE_PLUGIN_FS_CACHE_FOLDER` environment variable defines where the co
 
 **IMPORTANT**: the `fs` backend just copies files to a different location in the current agent, as it is not a shared or external resource, its caching possibilities are quite limited.
 
+#### Here is an example 
+
+```yaml
+
+env:
+  # Optional: where to store caches on the agent.
+  BUILDKITE_PLUGIN_FS_CACHE_FOLDER: "/var/cache/buildkite"
+
+steps:
+  - label: ":nodejs: Install dependencies"
+    commands:
+      - npm ci
+    plugins:
+      - cache#v1.7.0:
+          backend: fs
+          path: node_modules
+          manifest:
+            - package-lock.json
+          restore: file
+          save: file
+          # Optional compression (requires tools installed in the agent)
+          compression: tgz
+  ```
+
 #### `s3`
 
 Store things in an S3 bucket. You need to make sure that the `aws` command is available and appropriately configured.
@@ -81,6 +105,32 @@ You also need the agent to have access to the following defined environment vari
 * `BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT`: optional S3 custom endpoint to use
 
 Setting the `BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS` environment variable will reduce logging of file operations towards S3.
+
+
+### Here is an example
+
+```yaml
+env:
+  # Required: S3 bucket to store cache objects
+  BUILDKITE_PLUGIN_S3_CACHE_BUCKET: "my-cache-bucket"
+  BUILDKITE_PLUGIN_S3_CACHE_PREFIX: "buildkite/cache"
+
+
+steps:
+  - label: ":nodejs: Install deps (cached via S3)"
+    commands:
+      - npm ci
+    plugins:
+      - cache#v1.7.0:
+          backend: s3
+          path: node_modules
+          manifest:
+            - package-lock.json
+          restore: file
+          save: file
+          # Optional: choose a compression supported by your agent image
+          compression: zstd
+```
 
 ### `compression` (string)
 
