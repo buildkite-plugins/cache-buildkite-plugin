@@ -71,12 +71,11 @@ The `BUILDKITE_PLUGIN_FS_CACHE_FOLDER` environment variable defines where the co
 
 **IMPORTANT**: the `fs` backend just copies files to a different location in the current agent, as it is not a shared or external resource, its caching possibilities are quite limited.
 
-#### Example 
+#### Example
 
 ```yaml
 
 env:
-  
   BUILDKITE_PLUGIN_FS_CACHE_FOLDER: "/var/cache/buildkite" # Optional: where to store caches on the agent.
 
 steps:
@@ -91,7 +90,7 @@ steps:
             - package-lock.json
           restore: file
           save: file
-          compression: tgz # Optional compression 
+          compression: tgz # Optional compression
   ```
 
 #### `s3`
@@ -112,7 +111,7 @@ Setting the `BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS` environment variable wi
 env:
   BUILDKITE_PLUGIN_S3_CACHE_BUCKET: "my-cache-bucket" # Required: S3 bucket to store cache objects
   BUILDKITE_PLUGIN_S3_CACHE_PREFIX: "buildkite/cache"
-  BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT: "https://<your-endpoint>" 
+  BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT: "https://<your-endpoint>"
   BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS: "true"
 
 
@@ -128,7 +127,7 @@ steps:
             - package-lock.json
           restore: file
           save: file
-          compression: zstd 
+          compression: zstd
 ```
 
 ### `compression` (string)
@@ -219,7 +218,7 @@ You can assume that all calls like this will be preceded by an `exists` call to 
 
 Will save whatever is in the `$FILENAME` path (which can be a file or folder) in a way that can be identified by the string `$KEY`. A non-0 return code will cause the whole execution to halt and the current step to fail.
 
-* should fail with error 255 on any instance, preferably without output
+* should fail with error 255 on any instance, preferably without outpu
 
 ## Examples
 
