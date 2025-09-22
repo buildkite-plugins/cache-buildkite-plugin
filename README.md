@@ -74,20 +74,17 @@ The `BUILDKITE_PLUGIN_FS_CACHE_FOLDER` environment variable defines where the co
 #### Example
 
 ```yaml
-
 env:
   BUILDKITE_PLUGIN_FS_CACHE_FOLDER: "/var/cache/buildkite" # Optional: where to store caches on the agent.
 
 steps:
-  - label: ":nodejs: Install dependencies"
-    commands:
-      - npm ci
+  - label: ':nodejs: Install dependencies'
+    commands: npm ci
     plugins:
       - cache#v1.7.0:
           backend: fs
           path: node_modules
-          manifest:
-            - package-lock.json
+          manifest: package-lock.json
           restore: file
           save: file
           compression: tgz # Optional compression
@@ -112,19 +109,16 @@ env:
   BUILDKITE_PLUGIN_S3_CACHE_BUCKET: "my-cache-bucket" # Required: S3 bucket to store cache objects
   BUILDKITE_PLUGIN_S3_CACHE_PREFIX: "buildkite/cache"
   BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT: "https://<your-endpoint>"
-  BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS: "true"
-
+  BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS: "true" 
 
 steps:
-  - label: ":nodejs: Install dependencies"
-    commands:
-      - npm ci
+  - label: ':nodejs: Install dependencies'
+    commands: npm ci
     plugins:
       - cache#v1.7.0:
           backend: s3
           path: node_modules
-          manifest:
-            - package-lock.json
+          manifest: package-lock.json
           restore: file
           save: file
           compression: zstd
