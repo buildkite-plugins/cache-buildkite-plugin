@@ -71,13 +71,13 @@ The `BUILDKITE_PLUGIN_FS_CACHE_FOLDER` environment variable defines where the co
 
 **IMPORTANT**: the `fs` backend just copies files to a different location in the current agent, as it is not a shared or external resource, its caching possibilities are quite limited.
 
-#### Here is an example 
+#### Example 
 
 ```yaml
 
 env:
-  # Optional: where to store caches on the agent.
-  BUILDKITE_PLUGIN_FS_CACHE_FOLDER: "/var/cache/buildkite"
+  
+  BUILDKITE_PLUGIN_FS_CACHE_FOLDER: "/var/cache/buildkite" # Optional: where to store caches on the agent.
 
 steps:
   - label: ":nodejs: Install dependencies"
@@ -91,8 +91,7 @@ steps:
             - package-lock.json
           restore: file
           save: file
-          # Optional compression (requires tools installed in the agent)
-          compression: tgz
+          compression: tgz # Optional compression 
   ```
 
 #### `s3`
@@ -107,17 +106,18 @@ You also need the agent to have access to the following defined environment vari
 Setting the `BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS` environment variable will reduce logging of file operations towards S3.
 
 
-### Here is an example
+#### Example
 
 ```yaml
 env:
-  # Required: S3 bucket to store cache objects
-  BUILDKITE_PLUGIN_S3_CACHE_BUCKET: "my-cache-bucket"
+  BUILDKITE_PLUGIN_S3_CACHE_BUCKET: "my-cache-bucket" # Required: S3 bucket to store cache objects
   BUILDKITE_PLUGIN_S3_CACHE_PREFIX: "buildkite/cache"
+  BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT: "https://<your-endpoint>" 
+  BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS: "true"
 
 
 steps:
-  - label: ":nodejs: Install deps (cached via S3)"
+  - label: ":nodejs: Install dependencies"
     commands:
       - npm ci
     plugins:
@@ -128,8 +128,7 @@ steps:
             - package-lock.json
           restore: file
           save: file
-          # Optional: choose a compression supported by your agent image
-          compression: zstd
+          compression: zstd 
 ```
 
 ### `compression` (string)
