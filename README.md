@@ -79,7 +79,7 @@ env:
 
 steps:
   - label: ':nodejs: Install dependencies'
-    commands: npm ci
+    command: npm ci
     plugins:
       - cache#v1.7.0:
           backend: fs
@@ -88,7 +88,7 @@ steps:
           restore: file
           save: file
           compression: tgz # Optional compression
-  ```
+```
 
 #### `s3`
 
@@ -113,7 +113,7 @@ env:
 
 steps:
   - label: ':nodejs: Install dependencies'
-    commands: npm ci
+    command: npm ci
     plugins:
       - cache#v1.7.0:
           backend: s3
@@ -212,7 +212,7 @@ You can assume that all calls like this will be preceded by an `exists` call to 
 
 Will save whatever is in the `$FILENAME` path (which can be a file or folder) in a way that can be identified by the string `$KEY`. A non-0 return code will cause the whole execution to halt and the current step to fail.
 
-* should fail with error 255 on any instance, preferably without outpu
+* should fail with error 255 on any instance, preferably without output
 
 ## Examples
 
@@ -232,7 +232,8 @@ steps:
     command: npm ci
     plugins:
       - cache#v1.7.0:
-          manifest: package-lock.json
+          manifest:
+            - package-lock.json
           path: node_modules
           restore: pipeline
           save:
@@ -243,7 +244,8 @@ steps:
     command: npm test # does not save cache, not necessary
     plugins:
       - cache#v1.7.0:
-          manifest: package-lock.json
+          manifest:
+            - package-lock.json
           path: node_modules
           restore: file
   - wait: ~  # don't run deploy until tests pass
@@ -252,7 +254,8 @@ steps:
     command: npm run deploy
     plugins:
       - cache#v1.7.0:
-          manifest: package-lock.json
+          manifest:
+            - package-lock.json
           path: node_modules
           restore: file
           save:
