@@ -75,7 +75,7 @@ The `BUILDKITE_PLUGIN_FS_CACHE_FOLDER` environment variable defines where the co
 
 ```yaml
 env:
-  BUILDKITE_PLUGIN_FS_CACHE_FOLDER: "/var/cache/buildkite" # Optional: where to store caches on the agent.
+  BUILDKITE_PLUGIN_FS_CACHE_FOLDER: "/var/cache/buildkite" # Optional: where to store cache on the agent.
 
 steps:
   - label: ':nodejs: Install dependencies'
