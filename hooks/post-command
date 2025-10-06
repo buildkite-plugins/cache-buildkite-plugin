@@ -45,35 +45,50 @@ if [ "${#SAVE_LEVELS[@]}" -ne "${#result[@]}" ]; then
   exit 1
 fi
 
-ACTUAL_PATH="${CACHE_PATH}"
-
+# Validate manifest is present for file-level caching (config validation - always fails)
 for LEVEL in "${SAVE_LEVELS[@]}"; do
-  # this validates the level as well
-  KEY=$(build_key "${LEVEL}" "${CACHE_PATH}" "${COMPRESS}")
-
   if [ "${LEVEL}" = 'file' ] && [ -z "$(plugin_read_list MANIFEST)" ]; then
     echo "+++ 🚨 Missing manifest option in the cache plugin for file-level saving"
     exit 1
   fi
-
-  if [ "$(plugin_read_config FORCE 'false')" != 'false' ] ||
-     [ "${lower_level_updated:-false}" = 'true' ] ||
-     ! backend_exec exists "${KEY}"; then
-    echo "Saving ${LEVEL}-level cache of ${CACHE_PATH}"
-    if compression_active && [ "${already_compressed:-false}" = 'false' ]; then
-      ACTUAL_PATH=$(mktemp)
-
-      # TERM in case it is cancelled
-      # EXIT when the script ends
-      # shellcheck disable=SC2064 # we want the expansion to happen now
-      trap "cleanup_compression_tempfile '${ACTUAL_PATH}'" TERM EXIT
-
-      compress "${CACHE_PATH}" "${ACTUAL_PATH}"
-      already_compressed='true' # avoid re-compressing the files
-    fi
-    backend_exec save "${KEY}" "${ACTUAL_PATH}"
-    lower_level_updated='true' # to force saving higher levels
-  else
-    echo "Cache of ${LEVEL} already exists, skipping"
-  fi
 done
+
+perform_save() {
+  # Check if cache path exists before attempting to save
+  if [ ! -e "${CACHE_PATH}" ]; then
+    echo "+++ 🚨 Cache path '${CACHE_PATH}' does not exist"
+    return 1
+  fi
+
+  local ACTUAL_PATH="${CACHE_PATH}"
+  local lower_level_updated='false'
+  local already_compressed='false'
+
+  for LEVEL in "${SAVE_LEVELS[@]}"; do
+    # this validates the level as well
+    KEY=$(build_key "${LEVEL}" "${CACHE_PATH}" "${COMPRESS}")
+
+    if [ "$(plugin_read_config FORCE 'false')" != 'false' ] ||
+       [ "${lower_level_updated}" = 'true' ] ||
+       ! backend_exec exists "${KEY}"; then
+      echo "Saving ${LEVEL}-level cache of ${CACHE_PATH}"
+      if compression_active && [ "${already_compressed}" = 'false' ]; then
+        ACTUAL_PATH=$(mktemp)
+
+        # TERM in case it is cancelled
+        # EXIT when the script ends
+        # shellcheck disable=SC2064 # we want the expansion to happen now
+        trap "cleanup_compression_tempfile '${ACTUAL_PATH}'" TERM EXIT
+
+        compress "${CACHE_PATH}" "${ACTUAL_PATH}" || return 1
+        already_compressed='true' # avoid re-compressing the files
+      fi
+      backend_exec save "${KEY}" "${ACTUAL_PATH}" || return 1
+      lower_level_updated='true' # to force saving higher levels
+    else
+      echo "Cache of ${LEVEL} already exists, skipping"
+    fi
+  done
+}
+
+soft_fail_exec "save" perform_save
