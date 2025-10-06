@@ -71,6 +71,25 @@ The `BUILDKITE_PLUGIN_FS_CACHE_FOLDER` environment variable defines where the co
 
 **IMPORTANT**: the `fs` backend just copies files to a different location in the current agent, as it is not a shared or external resource, its caching possibilities are quite limited.
 
+#### Example
+
+```yaml
+env:
+  BUILDKITE_PLUGIN_FS_CACHE_FOLDER: "/var/cache/buildkite" # Optional: where to store cache on the agent.
+
+steps:
+  - label: ':nodejs: Install dependencies'
+    command: npm ci
+    plugins:
+      - cache#v1.7.0:
+          backend: fs
+          path: node_modules
+          manifest: package-lock.json
+          restore: file
+          save: file
+          compression: tgz # Optional compression
+```
+
 #### `s3`
 
 Store things in an S3 bucket. You need to make sure that the `aws` command is available and appropriately configured.
@@ -81,6 +100,29 @@ You also need the agent to have access to the following defined environment vari
 * `BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT`: optional S3 custom endpoint to use
 
 Setting the `BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS` environment variable will reduce logging of file operations towards S3.
+
+
+#### Example
+
+```yaml
+env:
+  BUILDKITE_PLUGIN_S3_CACHE_BUCKET: "my-cache-bucket" # Required: S3 bucket to store cache objects
+  BUILDKITE_PLUGIN_S3_CACHE_PREFIX: "buildkite/cache"
+  BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT: "https://<your-endpoint>"
+  BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS: "true" 
+
+steps:
+  - label: ':nodejs: Install dependencies'
+    command: npm ci
+    plugins:
+      - cache#v1.7.0:
+          backend: s3
+          path: node_modules
+          manifest: package-lock.json
+          restore: file
+          save: file
+          compression: zstd
+```
 
 ### `compression` (string)
 
@@ -190,7 +232,8 @@ steps:
     command: npm ci
     plugins:
       - cache#v1.7.0:
-          manifest: package-lock.json
+          manifest:
+            - package-lock.json
           path: node_modules
           restore: pipeline
           save:
@@ -201,7 +244,8 @@ steps:
     command: npm test # does not save cache, not necessary
     plugins:
       - cache#v1.7.0:
-          manifest: package-lock.json
+          manifest:
+            - package-lock.json
           path: node_modules
           restore: file
   - wait: ~  # don't run deploy until tests pass
@@ -210,7 +254,8 @@ steps:
     command: npm run deploy
     plugins:
       - cache#v1.7.0:
-          manifest: package-lock.json
+          manifest:
+            - package-lock.json
           path: node_modules
           restore: file
           save:
