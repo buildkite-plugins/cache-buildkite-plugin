@@ -141,6 +141,12 @@ The plugin includes wrappers to provide both examples and backwards-compatibilit
 
 Force saving the cache even if it exists. Default: `false`.
 
+### `soft-fail` (boolean)
+
+When enabled, any operational failures during cache restore or save operations will emit a warning and continue without failing the build. This includes missing cache paths, network errors, permission issues, and other runtime errors. Configuration errors (missing required options, invalid cache levels, etc.) will still fail immediately.
+
+This is useful when caching is an optimization and should not block the build pipeline. Default: `false`.
+
 ### `keep-compressed-artifacts` (boolean)
 
 Remove compression artifacts after they are used. Default: `false`.
@@ -262,6 +268,28 @@ steps:
             - pipeline
             - all
 
+```
+
+### Using soft-fail for non-critical caching
+
+When caching is purely an optimization and should never block your build, use the `soft-fail` option. This is particularly useful for:
+
+- Mission critical builds where caching is a "nice to have" but not essential
+- Optional build caches (ccache, sccache)
+- Dependency caches where network issues shouldn't fail builds
+- Situations where the cached path may not always exist
+
+```yaml
+steps:
+  - label: ':nodejs: Install dependencies'
+    command: npm ci
+    plugins:
+      - cache#v1.7.0:
+          path: node_modules
+          manifest: package-lock.json
+          restore: file
+          save: file
+          soft-fail: true  # Network issues or missing paths won't fail the build
 ```
 
 ## License

@@ -30,32 +30,36 @@ build_key "${MAX_LEVEL}" "${RESTORE_PATH}" >/dev/null # to validate the level
 
 SORTED_LEVELS=(file step branch pipeline all)
 
-for CURRENT_LEVEL in "${SORTED_LEVELS[@]}"; do
-  if [ "${CURRENT_LEVEL}" = 'file' ] && [ -z "$(plugin_read_list MANIFEST)" ]; then
-    continue
-  fi
-
-  KEY=$(build_key "${CURRENT_LEVEL}" "${RESTORE_PATH}" "${COMPRESS}")
-  if backend_exec exists "${KEY}"; then
-    echo "Cache hit at ${CURRENT_LEVEL} level, restoring ${RESTORE_PATH}..."
-
-    if compression_active; then
-      TEMP_PATH=$(mktemp)
-
-      # TERM in case it is cancelled
-      # EXIT when the script ends
-      # shellcheck disable=SC2064 # we want the expansion to happen now
-      trap "cleanup_compression_tempfile '${TEMP_PATH}'" TERM  EXIT
-
-      backend_exec get "${KEY}" "${TEMP_PATH}"
-      decompress "${TEMP_PATH}" "${RESTORE_PATH}"
-    else
-      backend_exec get "${KEY}" "${RESTORE_PATH}"
+perform_restore() {
+  for CURRENT_LEVEL in "${SORTED_LEVELS[@]}"; do
+    if [ "${CURRENT_LEVEL}" = 'file' ] && [ -z "$(plugin_read_list MANIFEST)" ]; then
+      continue
     fi
 
-    exit 0
-  elif [ "${CURRENT_LEVEL}" = "${MAX_LEVEL}" ]; then
-    echo "Cache miss up to ${CURRENT_LEVEL}-level for ${RESTORE_PATH}, sorry"
-    break
-  fi
-done
+    KEY=$(build_key "${CURRENT_LEVEL}" "${RESTORE_PATH}" "${COMPRESS}")
+    if backend_exec exists "${KEY}"; then
+      echo "Cache hit at ${CURRENT_LEVEL} level, restoring ${RESTORE_PATH}..."
+
+      if compression_active; then
+        TEMP_PATH=$(mktemp)
+
+        # TERM in case it is cancelled
+        # EXIT when the script ends
+        # shellcheck disable=SC2064 # we want the expansion to happen now
+        trap "cleanup_compression_tempfile '${TEMP_PATH}'" TERM  EXIT
+
+        backend_exec get "${KEY}" "${TEMP_PATH}" || return 1
+        decompress "${TEMP_PATH}" "${RESTORE_PATH}" || return 1
+      else
+        backend_exec get "${KEY}" "${RESTORE_PATH}" || return 1
+      fi
+
+      exit 0
+    elif [ "${CURRENT_LEVEL}" = "${MAX_LEVEL}" ]; then
+      echo "Cache miss up to ${CURRENT_LEVEL}-level for ${RESTORE_PATH}, sorry"
+      break
+    fi
+  done
+}
+
+soft_fail_exec "restore" perform_restore

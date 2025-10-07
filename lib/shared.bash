@@ -67,3 +67,30 @@ backend_exec() {
 
   PATH="${PATH}:${DIR}/../backends" "cache_${BACKEND_NAME}" "$@"
 }
+
+# Executes a command with soft-fail handling
+# If soft-fail is enabled and the command fails, warns and exits 0
+# Otherwise, propagates the failure
+soft_fail_exec() {
+  local operation="$1"
+  shift
+
+  local SOFT_FAIL
+  SOFT_FAIL=$(plugin_read_config SOFT_FAIL 'false')
+
+  if [ "${SOFT_FAIL}" = 'true' ]; then
+    # Disable errexit temporarily to catch errors
+    set +e
+    "$@"
+    local exit_code=$?
+    set -e
+
+    if [ ${exit_code} -ne 0 ]; then
+      echo "--- ⚠️  Cache ${operation} operation failed, continuing build (soft-fail enabled)"
+      exit 0
+    fi
+  else
+    # Execute normally, let errors propagate
+    "$@"
+  fi
+}
