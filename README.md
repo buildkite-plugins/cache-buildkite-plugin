@@ -36,6 +36,7 @@ The plugin supports various backends and compression algorithms, and some enviro
 - `tar` for tar compression
 - `zip/unzip` for zip compression
 - `aws` AWS CLI for reading and writing to an AWS S3 backend
+- `gsutil` or `gcloud storage` Google Cloud SDK CLI for reading and writing to a GCS backend
 
 ## Mandatory parameters
 
@@ -62,6 +63,7 @@ You can specify multiple levels in an array to save the same artifact as a cache
 Defines how the cache is stored and restored. Can be any string (see [Customizable Backends](#customizable-backends)), but the plugin natively supports the following:
 * `fs` (default)
 * `s3`
+* `gcs`
 
 #### `fs`
 
@@ -117,6 +119,38 @@ steps:
     plugins:
       - cache#v1.7.0:
           backend: s3
+          path: node_modules
+          manifest: package-lock.json
+          restore: file
+          save: file
+          compression: zstd
+```
+
+#### `gcs`
+
+Store things in a Google Cloud Storage (GCS) bucket. The backend automatically detects and uses either `gcloud storage` (preferred) or `gsutil` CLI tools, whichever is available. You need to make sure at least one of these commands is available and appropriately configured with the necessary credentials and access permissions.
+
+You also need the agent to have access to the following defined environment variables:
+* `BUILDKITE_PLUGIN_GCS_CACHE_BUCKET`: the bucket to use (backend will fail if not defined)
+* `BUILDKITE_PLUGIN_GCS_CACHE_PREFIX`: optional prefix to use for the cache within the bucket
+* `BUILDKITE_PLUGIN_GCS_CACHE_CLI`: optional CLI preference, either `gcloud` or `gsutil` (auto-detects if not set, preferring `gcloud storage`)
+
+Setting the `BUILDKITE_PLUGIN_GCS_CACHE_QUIET` environment variable will reduce logging of file operations to GCS.
+
+#### Example
+
+```yaml
+env:
+  BUILDKITE_PLUGIN_GCS_CACHE_BUCKET: "my-cache-bucket" # Required: GCS bucket to store cache objects
+  BUILDKITE_PLUGIN_GCS_CACHE_PREFIX: "buildkite/cache"
+  BUILDKITE_PLUGIN_GCS_CACHE_QUIET: "true"
+
+steps:
+  - label: ':nodejs: Install dependencies'
+    command: npm ci
+    plugins:
+      - cache#v1.7.0:
+          backend: gcs
           path: node_modules
           manifest: package-lock.json
           restore: file
