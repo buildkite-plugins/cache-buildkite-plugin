@@ -94,6 +94,8 @@ steps:
 
 Store things in an S3 bucket. You need to make sure that the `aws` command is available and appropriately configured.
 
+**AWS Authentication**: For AWS role assumption, use the [aws-assume-role-with-web-identity](https://github.com/buildkite-plugins/aws-assume-role-with-web-identity-buildkite-plugin) plugin. Alternatively, configure AWS credentials via IAM instance profiles, environment variables, or AWS CLI configuration.
+
 You also need the agent to have access to the following defined environment variables:
 * `BUILDKITE_PLUGIN_S3_CACHE_BUCKET`: the bucket to use (backend will fail if not defined)
 * `BUILDKITE_PLUGIN_S3_CACHE_PREFIX`: optional prefix to use for the cache within the bucket
@@ -109,12 +111,14 @@ env:
   BUILDKITE_PLUGIN_S3_CACHE_BUCKET: "my-cache-bucket" # Required: S3 bucket to store cache objects
   BUILDKITE_PLUGIN_S3_CACHE_PREFIX: "buildkite/cache"
   BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT: "https://<your-endpoint>"
-  BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS: "true" 
+  BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS: "true"
 
 steps:
   - label: ':nodejs: Install dependencies'
     command: npm ci
     plugins:
+      - aws-assume-role-with-web-identity#v1.4.0:
+          role-arn: $AWS_ROLE_ARN
       - cache#v1.7.0:
           backend: s3
           path: node_modules
