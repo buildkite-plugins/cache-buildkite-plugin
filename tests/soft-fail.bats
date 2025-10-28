@@ -3,6 +3,9 @@
 # Tests for the soft-fail option feature
 # This feature allows cache operations to fail gracefully without blocking the build
 
+# To debug stubs, uncomment these lines:
+# export CACHE_DUMMY_STUB_DEBUG=/dev/tty
+
 setup() {
   load "${BATS_PLUGIN_PATH}/load.bash"
 
@@ -62,21 +65,56 @@ teardown() {
   assert_output --partial 'Missing manifest option'
 }
 
-@test "Soft-fail restore: successful restore works normally" {
+@test "Soft-fail restore: backend restore failure exits 0 with warning" {
   export BUILDKITE_PLUGIN_CACHE_RESTORE=step
-  unset BUILDKITE_PLUGIN_CACHE_MANIFEST
 
   stub cache_dummy \
     'exists \* : exit 0' \
-    'get \* \* : echo "restoring cache"; exit 0'
+    'get \* \* : exit 1'
 
   run "$PWD/hooks/pre-command"
 
   assert_success
-  assert_output --partial 'Cache hit at step level'
-  refute_output --partial 'soft-fail'
+  assert_output --partial 'Cache restore operation failed, continuing build (soft-fail enabled)'
 
   unstub cache_dummy
+}
+
+@test "Soft-fail restore: backend restore intermediate failure exits 0 with warning" {
+  export BUILDKITE_PLUGIN_CACHE_RESTORE=pipeline
+
+  stub cache_dummy \
+    'exists \* : exit 1' \
+    'exists \* : exit 0' \
+    'get \* \* : exit 1'
+
+  run "$PWD/hooks/pre-command"
+
+  assert_success
+  assert_output --partial 'Cache restore operation failed, continuing build (soft-fail enabled)'
+
+  unstub cache_dummy
+}
+
+@test "Soft fail restore: compression failure exits 0 with warning" {
+  export BUILDKITE_PLUGIN_CACHE_RESTORE=step
+  export BUILDKITE_PLUGIN_CACHE_COMPRESSION=dummy_compress
+
+  stub cache_dummy \
+    'exists \* : exit 0' \
+    "get \* \* : echo restoring \$2 to \$3"
+
+  stub dummy_compress_wrapper \
+    "decompress \* \* : exit 1"
+
+  run "$PWD/hooks/pre-command"
+
+  assert_success
+  assert_output --partial 'Cache is compressed, decompressing with dummy_compress'
+  assert_output --partial 'Cache restore operation failed, continuing build (soft-fail enabled)'
+
+  unstub cache_dummy
+  unstub dummy_compress_wrapper
 }
 
 # ============================================================================
@@ -153,4 +191,38 @@ teardown() {
   assert_output --partial 'Cache save operation failed, continuing build (soft-fail enabled)'
 
   unstub cache_dummy
+}
+
+@test "Soft-fail save: multiple levels with intermediate failure exits 0 with warning" {
+  export BUILDKITE_PLUGIN_CACHE_SAVE_0=branch
+  export BUILDKITE_PLUGIN_CACHE_SAVE_1=step
+  export BUILDKITE_PLUGIN_CACHE_FORCE=true
+
+  stub cache_dummy \
+    'save \* \* : exit 0' \
+    'save \* \* : exit 1'
+
+  run "$PWD/hooks/post-command"
+
+  assert_success
+  assert_output --partial 'Cache save operation failed, continuing build (soft-fail enabled)'
+
+  unstub cache_dummy
+}
+
+@test "Soft fail save: compression failure exits 0 with warning" {
+  export BUILDKITE_PLUGIN_CACHE_SAVE=step
+  export BUILDKITE_PLUGIN_CACHE_COMPRESSION=dummy_compress
+  export BUILDKITE_PLUGIN_CACHE_FORCE=true
+
+  stub dummy_compress_wrapper \
+    "compress \* \* : exit 1"
+
+  run "$PWD/hooks/post-command"
+
+  assert_success
+  assert_output --partial "Compressing ${BUILDKITE_PLUGIN_CACHE_PATH} with dummy_compress"
+  assert_output --partial 'Cache save operation failed, continuing build (soft-fail enabled)'
+
+  unstub dummy_compress_wrapper
 }
