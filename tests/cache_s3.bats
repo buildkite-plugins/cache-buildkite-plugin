@@ -64,46 +64,6 @@ setup() {
     's3 sync --only-show-errors \* \* : echo ' \
     's3api head-object --bucket \* --key \* : false ' \
     's3 sync --only-show-errors \* \* : echo ' \
-    's3 sync \* \* : echo ' \
-    's3api head-object --bucket \* --key \* : false ' \
-    's3 sync \* \* : echo '
-
-  run "${PWD}/backends/cache_s3" save from to
-
-  assert_success
-  assert_output ''
-
-  run "${PWD}/backends/cache_s3" get from to
-
-  assert_success
-  assert_output ''
-
-  unset BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS
-
-  run "${PWD}/backends/cache_s3" save from to
-
-  assert_success
-  assert_output ''
-
-  run "${PWD}/backends/cache_s3" get from to
-
-  assert_success
-  assert_output ''
-
-  unstub aws
-}
-
-@test 'Endpoint URL flag passed when environment is set' {
-  export BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT=https://s3.somewhere.com
-
-  stub aws \
-    '--endpoint-url https://s3.somewhere.com s3 sync \* \* : echo ' \
-    '--endpoint-url https://s3.somewhere.com s3api head-object --bucket \* --key \* : false ' \
-    '--endpoint-url https://s3.somewhere.com s3 sync \* \* : echo ' \
-    '--endpoint-url https://s3.somewhere.com s3api list-objects-v2 --bucket \* --prefix \* --max-items 1 --query Contents : echo exists' \
-    's3 sync \* \* : echo ' \
-    's3api head-object --bucket \* --key \* : false ' \
-    's3 sync \* \* : echo ' \
     's3api list-objects-v2 --bucket \* --prefix \* --max-items 1 --query Contents : echo exists'
 
   run "${PWD}/backends/cache_s3" save from to
@@ -121,7 +81,42 @@ setup() {
   assert_success
   assert_output ''
 
-  unset BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT
+  unstub aws
+}
+
+@test 'Endpoint URL flag passed when environment is set' {
+  export BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT=https://s3.somewhere.com
+
+  stub aws \
+    '--endpoint-url https://s3.somewhere.com s3 sync \* \* : echo ' \
+    '--endpoint-url https://s3.somewhere.com s3api head-object --bucket \* --key \* : false ' \
+    '--endpoint-url https://s3.somewhere.com s3 sync \* \* : echo ' \
+    '--endpoint-url https://s3.somewhere.com s3api list-objects-v2 --bucket \* --prefix \* --max-items 1 --query Contents : echo exists'
+
+  run "${PWD}/backends/cache_s3" save from to
+
+  assert_success
+  assert_output ''
+
+  run "${PWD}/backends/cache_s3" get from to
+
+  assert_success
+  assert_output ''
+
+  run "${PWD}/backends/cache_s3" exists to
+
+  assert_success
+  assert_output ''
+}
+
+@test 'Profile is passed when environment is set' {
+  export BUILDKITE_PLUGIN_S3_CACHE_PROFILE=custom-profile
+
+  stub aws \
+    '--profile custom-profile s3 sync \* \* : echo ' \
+    '--profile custom-profile s3api head-object --bucket \* --key \* : false ' \
+    '--profile custom-profile s3 sync \* \* : echo ' \
+    '--profile custom-profile s3api list-objects-v2 --bucket \* --prefix \* --max-items 1 --query Contents : echo exists' \
 
   run "${PWD}/backends/cache_s3" save from to
 

@@ -97,9 +97,10 @@ Store things in an S3 bucket. You need to make sure that the `aws` command is av
 **AWS Authentication**: For AWS role assumption, use the [aws-assume-role-with-web-identity](https://github.com/buildkite-plugins/aws-assume-role-with-web-identity-buildkite-plugin) plugin. Alternatively, configure AWS credentials via IAM instance profiles, environment variables, or AWS CLI configuration.
 
 You also need the agent to have access to the following defined environment variables:
-* `BUILDKITE_PLUGIN_S3_CACHE_BUCKET`: the bucket to use (backend will fail if not defined)
+* `BUILDKITE_PLUGIN_S3_CACHE_BUCKET`: the bucket to use (**mandatory**, backend will fail if not defined)
 * `BUILDKITE_PLUGIN_S3_CACHE_PREFIX`: optional prefix to use for the cache within the bucket
 * `BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT`: optional S3 custom endpoint to use
+* `BUILDKITE_PLUGIN_S3_CACHE_PROFILE`: optional profile (that [must exist in the agent's config](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-role.html)) to use for CLI calls
 
 Setting the `BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS` environment variable will reduce logging of file operations towards S3.
 
@@ -112,6 +113,7 @@ env:
   BUILDKITE_PLUGIN_S3_CACHE_PREFIX: "buildkite/cache"
   BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT: "https://<your-endpoint>"
   BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS: "true"
+  BUILDKITE_PLUGIN_S3_CACHE_PROFILE: cache-role
 
 steps:
   - label: ':nodejs: Install dependencies'
