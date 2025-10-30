@@ -13,7 +13,7 @@ steps:
   - label: ':nodejs: Install dependencies'
     command: npm ci
     plugins:
-      - cache#v1.7.0:
+      - cache#v1.8.0:
           manifest: package-lock.json
           path: node_modules
           restore: file
@@ -81,7 +81,7 @@ steps:
   - label: ':nodejs: Install dependencies'
     command: npm ci
     plugins:
-      - cache#v1.7.0:
+      - cache#v1.8.0:
           backend: fs
           path: node_modules
           manifest: package-lock.json
@@ -121,7 +121,7 @@ steps:
     plugins:
       - aws-assume-role-with-web-identity#v1.4.0:
           role-arn: $AWS_ROLE_ARN
-      - cache#v1.7.0:
+      - cache#v1.8.0:
           backend: s3
           path: node_modules
           manifest: package-lock.json
@@ -177,7 +177,7 @@ steps:
       os: "{{matrix}}"
       GOMODCACHE: pkg/cache
     plugins:
-      - cache#v1.7.0:
+      - cache#v1.8.0:
           path: pkg/cache
           manifest:
             - go.mod
@@ -243,7 +243,7 @@ steps:
   - label: ':nodejs: Install dependencies'
     command: npm ci
     plugins:
-      - cache#v1.7.0:
+      - cache#v1.8.0:
           manifest:
             - package-lock.json
           path: node_modules
@@ -255,7 +255,7 @@ steps:
   - label: ':test_tube: Run tests'
     command: npm test # does not save cache, not necessary
     plugins:
-      - cache#v1.7.0:
+      - cache#v1.8.0:
           manifest:
             - package-lock.json
           path: node_modules
@@ -265,7 +265,7 @@ steps:
     if: build.branch == "master"
     command: npm run deploy
     plugins:
-      - cache#v1.7.0:
+      - cache#v1.8.0:
           manifest:
             - package-lock.json
           path: node_modules
@@ -290,7 +290,7 @@ steps:
   - label: ':nodejs: Install dependencies'
     command: npm ci
     plugins:
-      - cache#v1.7.0:
+      - cache#v1.8.0:
           path: node_modules
           manifest: package-lock.json
           restore: file
