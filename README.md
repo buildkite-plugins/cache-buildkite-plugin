@@ -13,7 +13,7 @@ steps:
   - label: ':nodejs: Install dependencies'
     command: npm ci
     plugins:
-      - cache#v1.7.0:
+      - cache#v1.8.0:
           manifest: package-lock.json
           path: node_modules
           restore: file
@@ -83,7 +83,7 @@ steps:
   - label: ':nodejs: Install dependencies'
     command: npm ci
     plugins:
-      - cache#v1.7.0:
+      - cache#v1.8.0:
           backend: fs
           path: node_modules
           manifest: package-lock.json
@@ -96,10 +96,13 @@ steps:
 
 Store things in an S3 bucket. You need to make sure that the `aws` command is available and appropriately configured.
 
+**AWS Authentication**: For AWS role assumption, use the [aws-assume-role-with-web-identity](https://github.com/buildkite-plugins/aws-assume-role-with-web-identity-buildkite-plugin) plugin. Alternatively, configure AWS credentials via IAM instance profiles, environment variables, or AWS CLI configuration.
+
 You also need the agent to have access to the following defined environment variables:
-* `BUILDKITE_PLUGIN_S3_CACHE_BUCKET`: the bucket to use (backend will fail if not defined)
+* `BUILDKITE_PLUGIN_S3_CACHE_BUCKET`: the bucket to use (**mandatory**, backend will fail if not defined)
 * `BUILDKITE_PLUGIN_S3_CACHE_PREFIX`: optional prefix to use for the cache within the bucket
 * `BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT`: optional S3 custom endpoint to use
+* `BUILDKITE_PLUGIN_S3_CACHE_PROFILE`: optional profile (that [must exist in the agent's config](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-role.html)) to use for CLI calls
 
 Setting the `BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS` environment variable will reduce logging of file operations towards S3.
 
@@ -111,13 +114,16 @@ env:
   BUILDKITE_PLUGIN_S3_CACHE_BUCKET: "my-cache-bucket" # Required: S3 bucket to store cache objects
   BUILDKITE_PLUGIN_S3_CACHE_PREFIX: "buildkite/cache"
   BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT: "https://<your-endpoint>"
-  BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS: "true" 
+  BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS: "true"
+  BUILDKITE_PLUGIN_S3_CACHE_PROFILE: cache-role
 
 steps:
   - label: ':nodejs: Install dependencies'
     command: npm ci
     plugins:
-      - cache#v1.7.0:
+      - aws-assume-role-with-web-identity#v1.4.0:
+          role-arn: $AWS_ROLE_ARN
+      - cache#v1.8.0:
           backend: s3
           path: node_modules
           manifest: package-lock.json
@@ -175,6 +181,12 @@ The plugin includes wrappers to provide both examples and backwards-compatibilit
 
 Force saving the cache even if it exists. Default: `false`.
 
+### `soft-fail` (boolean)
+
+When enabled, any operational failures during cache restore or save operations will emit a warning and continue without failing the build. This includes missing cache paths, network errors, permission issues, and other runtime errors. Configuration errors (missing required options, invalid cache levels, etc.) will still fail immediately.
+
+This is useful when caching is an optimization and should not block the build pipeline. Default: `false`.
+
 ### `keep-compressed-artifacts` (boolean)
 
 Remove compression artifacts after they are used. Default: `false`.
@@ -199,7 +211,7 @@ steps:
       os: "{{matrix}}"
       GOMODCACHE: pkg/cache
     plugins:
-      - cache#v1.7.0:
+      - cache#v1.8.0:
           path: pkg/cache
           manifest:
             - go.mod
@@ -265,7 +277,7 @@ steps:
   - label: ':nodejs: Install dependencies'
     command: npm ci
     plugins:
-      - cache#v1.7.0:
+      - cache#v1.8.0:
           manifest:
             - package-lock.json
           path: node_modules
@@ -277,7 +289,7 @@ steps:
   - label: ':test_tube: Run tests'
     command: npm test # does not save cache, not necessary
     plugins:
-      - cache#v1.7.0:
+      - cache#v1.8.0:
           manifest:
             - package-lock.json
           path: node_modules
@@ -287,7 +299,7 @@ steps:
     if: build.branch == "master"
     command: npm run deploy
     plugins:
-      - cache#v1.7.0:
+      - cache#v1.8.0:
           manifest:
             - package-lock.json
           path: node_modules
@@ -296,6 +308,28 @@ steps:
             - pipeline
             - all
 
+```
+
+### Using soft-fail for non-critical caching
+
+When caching is purely an optimization and should never block your build, use the `soft-fail` option. This is particularly useful for:
+
+- Mission critical builds where caching is a "nice to have" but not essential
+- Optional build caches (ccache, sccache)
+- Dependency caches where network issues shouldn't fail builds
+- Situations where the cached path may not always exist
+
+```yaml
+steps:
+  - label: ':nodejs: Install dependencies'
+    command: npm ci
+    plugins:
+      - cache#v1.8.0:
+          path: node_modules
+          manifest: package-lock.json
+          restore: file
+          save: file
+          soft-fail: true  # Network issues or missing paths won't fail the build
 ```
 
 ## License

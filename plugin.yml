@@ -23,6 +23,8 @@ configuration:
       type: boolean
     key-extra:
       type: string
+    soft-fail:
+      type: boolean
     manifest:
       oneOf:
         - type: string

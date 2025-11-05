@@ -16,6 +16,10 @@ build_key() {
 aws_cmd() {
   aws_cmd=(aws)
 
+  if [ -n "${BUILDKITE_PLUGIN_S3_CACHE_PROFILE}" ]; then
+    aws_cmd+=(--profile "${BUILDKITE_PLUGIN_S3_CACHE_PROFILE}")
+  fi
+
   if [ -n "${BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT}" ]; then
     aws_cmd+=(--endpoint-url "${BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT}")
   fi
