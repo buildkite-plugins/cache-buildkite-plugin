@@ -226,3 +226,37 @@ teardown() {
 
   unstub dummy_compress_wrapper
 }
+
+# ============================================================================
+# SIGNAL PROPAGATION TESTS
+# ============================================================================
+
+@test "Soft-fail restore: signal termination (exit >= 128) is propagated" {
+  export BUILDKITE_PLUGIN_CACHE_RESTORE=step
+
+  stub cache_dummy \
+    'exists \* : exit 0' \
+    'get \* \* : exit 143'
+
+  run "$PWD/hooks/pre-command"
+
+  assert_equal "$status" 143
+  refute_output --partial 'Cache restore operation failed, continuing build (soft-fail enabled)'
+
+  unstub cache_dummy
+}
+
+@test "Soft-fail save: signal termination (exit >= 128) is propagated" {
+  export BUILDKITE_PLUGIN_CACHE_SAVE=step
+  export BUILDKITE_PLUGIN_CACHE_FORCE=true
+
+  stub cache_dummy \
+    'save \* \* : exit 143'
+
+  run "$PWD/hooks/post-command"
+
+  assert_equal "$status" 143
+  refute_output --partial 'Cache save operation failed, continuing build (soft-fail enabled)'
+
+  unstub cache_dummy
+}

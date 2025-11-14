@@ -85,7 +85,11 @@ soft_fail_exec() {
     local exit_code=$?
     set -e
 
-    if [ ${exit_code} -ne 0 ]; then
+    # Exit codes 128+N indicate the process was killed by signal N
+    # Always propagate signal terminations (SIGTERM, SIGKILL, SIGINT, etc.)
+    if [ ${exit_code} -ge 128 ]; then
+      exit ${exit_code}
+    elif [ ${exit_code} -ne 0 ]; then
       echo "--- ⚠️  Cache ${operation} operation failed, continuing build (soft-fail enabled)"
       exit 0
     fi

@@ -80,10 +80,10 @@ perform_save() {
         # shellcheck disable=SC2064 # we want the expansion to happen now
         trap "cleanup_compression_tempfile '${ACTUAL_PATH}'" TERM EXIT
 
-        compress "${CACHE_PATH}" "${ACTUAL_PATH}" || return 1
+        compress "${CACHE_PATH}" "${ACTUAL_PATH}" || return $?
         already_compressed='true' # avoid re-compressing the files
       fi
-      backend_exec save "${KEY}" "${ACTUAL_PATH}" || return 1
+      backend_exec save "${KEY}" "${ACTUAL_PATH}" || return $?
       lower_level_updated='true' # to force saving higher levels
     else
       echo "Cache of ${LEVEL} already exists, skipping"

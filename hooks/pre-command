@@ -48,10 +48,10 @@ perform_restore() {
         # shellcheck disable=SC2064 # we want the expansion to happen now
         trap "cleanup_compression_tempfile '${TEMP_PATH}'" TERM  EXIT
 
-        backend_exec get "${KEY}" "${TEMP_PATH}" || return 1
-        decompress "${TEMP_PATH}" "${RESTORE_PATH}" || return 1
+        backend_exec get "${KEY}" "${TEMP_PATH}" || return $?
+        decompress "${TEMP_PATH}" "${RESTORE_PATH}" || return $?
       else
-        backend_exec get "${KEY}" "${RESTORE_PATH}" || return 1
+        backend_exec get "${KEY}" "${RESTORE_PATH}" || return $?
       fi
 
       exit 0
