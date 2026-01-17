@@ -83,7 +83,7 @@ steps:
   - label: ':nodejs: Install dependencies'
     command: npm ci
     plugins:
-      - cache#v1.8.0:
+      - cache#v1.8.1:
           backend: fs
           path: node_modules
           manifest: package-lock.json
