@@ -144,11 +144,11 @@ setup() {
   stub gsutil \
     "stat \* : exit 1" \
     "ls -d \* : exit 1" \
-    "-m rsync -r -d \* \* : ln -s \$4 $BATS_TEST_TMPDIR/gcs-cache/\$(echo \$5 | md5sum | cut -c-32)" \
+    "-m rsync -r -d \* \* : ln -s \$5 $BATS_TEST_TMPDIR/gcs-cache/\$(echo \$6 | md5sum | cut -c-32)" \
     "stat \* : exit 1" \
     "ls -d \* : echo 'gs://my-bucket/new-folder/'" \
     "ls -d \* : echo 'gs://my-bucket/new-folder/'" \
-    "-m rsync -r -d \* \* : cp -r $BATS_TEST_TMPDIR/gcs-cache/\$(echo \$4 | md5sum | cut -c-32) \$5"
+    "-m rsync -r -d \* \* : cp -r $BATS_TEST_TMPDIR/gcs-cache/\$(echo \$5 | md5sum | cut -c-32) \$6"
 
   run "${PWD}/backends/cache_gcs" exists new-folder
 
