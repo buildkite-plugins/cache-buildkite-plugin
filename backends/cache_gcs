@@ -1,0 +1,175 @@
+#!/bin/bash
+
+if [ -z "${BUILDKITE_PLUGIN_GCS_CACHE_BUCKET}" ]; then
+  echo '+++ 🚨 Missing GCS bucket configuration'
+  exit 1
+fi
+
+# Detect which GCS CLI to use
+detect_gcs_cli() {
+  # Check for explicit preference
+  if [ -n "${BUILDKITE_PLUGIN_GCS_CACHE_CLI}" ]; then
+    echo "${BUILDKITE_PLUGIN_GCS_CACHE_CLI}"
+    return
+  fi
+
+  # Auto-detect: prefer gcloud storage if available
+  if command -v gcloud &>/dev/null && gcloud storage --help &>/dev/null 2>&1; then
+    echo "gcloud"
+  elif command -v gsutil &>/dev/null; then
+    echo "gsutil"
+  else
+    echo '+++ 🚨 Neither gcloud storage nor gsutil found' >&2
+    exit 1
+  fi
+}
+
+# Lazy load CLI selection
+get_gcs_cli() {
+  if [ -z "${GCS_CLI}" ]; then
+    GCS_CLI=$(detect_gcs_cli)
+  fi
+  echo "${GCS_CLI}"
+}
+
+build_key() {
+  if [ -n "${BUILDKITE_PLUGIN_GCS_CACHE_PREFIX}" ]; then
+    echo "${BUILDKITE_PLUGIN_GCS_CACHE_PREFIX}/${1}"
+  else
+    echo "$1"
+  fi
+}
+
+gcs_cmd() {
+  local cmd_args=()
+  local cli
+  cli=$(get_gcs_cli)
+
+  if [ "${cli}" = "gcloud" ]; then
+    cmd_args=(gcloud storage)
+    if [ -n "${BUILDKITE_PLUGIN_GCS_CACHE_QUIET}" ]; then
+      cmd_args+=(--verbosity=none)
+    fi
+  else
+    cmd_args=(gsutil)
+    if [ -n "${BUILDKITE_PLUGIN_GCS_CACHE_QUIET}" ]; then
+      cmd_args+=(-q)
+    fi
+  fi
+
+  "${cmd_args[@]}" "$@"
+}
+
+gcs_copy() {
+  local from="$1"
+  local to="$2"
+  local use_rsync="${3:-true}"
+  local cli
+  cli=$(get_gcs_cli)
+
+  if [ "${use_rsync}" = 'true' ]; then
+    # Use rsync for directories
+    # Note: gcloud uses --delete-unmatched-destination-objects instead of -d
+    if [ "${cli}" = "gcloud" ]; then
+      gcs_cmd rsync -r --delete-unmatched-destination-objects "${from}" "${to}"
+    else
+      gcs_cmd -m rsync -r -d "${from}" "${to}"
+    fi
+  else
+    # Use cp for single files
+    gcs_cmd cp "${from}" "${to}"
+  fi
+}
+
+gcs_exists() {
+  local key="$1"
+  local full_path
+  full_path="gs://${BUILDKITE_PLUGIN_GCS_CACHE_BUCKET}/$(build_key "${key}")"
+  local cli
+  cli=$(get_gcs_cli)
+
+  # Check if exact object exists or if it's a directory prefix
+  if [ "${cli}" = "gcloud" ]; then
+    # For gcloud, check if ls produces any output (exit code alone is unreliable)
+    local output
+    # Check for objects with this exact path or under this prefix
+    output=$(gcs_cmd ls "${full_path}" 2>/dev/null) || true
+    if [ -n "${output}" ]; then
+      return 0
+    fi
+    # Also try with trailing slash for folder-like prefixes
+    output=$(gcs_cmd ls "${full_path}/" 2>/dev/null) || true
+    if [ -n "${output}" ]; then
+      return 0
+    fi
+  else
+    # For gsutil, use stat for exact object match
+    if gcs_cmd stat "${full_path}" &>/dev/null; then
+      return 0
+    fi
+    # Check if it's a prefix (folder) using ls -d
+    if gcs_cmd ls -d "${full_path}/" &>/dev/null; then
+      return 0
+    fi
+  fi
+  return 1
+}
+
+restore_cache() {
+  local from="$1"
+  local to="$2"
+  local use_rsync='false'
+  local key
+  key="$(build_key "${from}")"
+  local full_path="gs://${BUILDKITE_PLUGIN_GCS_CACHE_BUCKET}/${key}"
+  local cli
+  cli=$(get_gcs_cli)
+
+  # Check if it's a directory by trying to list it as a prefix
+  if [ "${cli}" = "gcloud" ]; then
+    # For gcloud, check if there are objects under this prefix (directory)
+    if gcs_cmd ls "${full_path}/" &>/dev/null; then
+      use_rsync='true'
+    fi
+  else
+    # For gsutil, use ls -d for efficiency
+    if gcs_cmd ls -d "${full_path}/" &>/dev/null; then
+      use_rsync='true'
+    fi
+  fi
+
+  gcs_copy "${full_path}" "${to}" "${use_rsync}"
+}
+
+save_cache() {
+  local to="$1"
+  local from="$2"
+  local use_rsync='true'
+  local key
+  key="$(build_key "${to}")"
+  local full_path="gs://${BUILDKITE_PLUGIN_GCS_CACHE_BUCKET}/${key}"
+
+  if [ -f "${from}" ]; then
+    use_rsync='false'
+  fi
+
+  gcs_copy "${from}" "${full_path}" "${use_rsync}"
+}
+
+exists_cache() {
+  if [ -z "$1" ]; then exit 1; fi
+  gcs_exists "$1"
+}
+
+OPCODE="$1"
+shift
+
+if [ "$OPCODE" = 'exists' ]; then
+  exists_cache "$@"
+elif [ "$OPCODE" = 'get' ]; then
+  restore_cache "$@"
+elif [ "$OPCODE" = 'save' ]; then
+  save_cache "$@"
+else
+  exit 255
+fi
