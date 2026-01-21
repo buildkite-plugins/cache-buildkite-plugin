@@ -105,3 +105,62 @@ setup() {
   assert_success
   assert [ ! -e  temp_file ]
 }
+
+@test 'zstd_wrapper uses --zstd when tar supports it' {
+  stub tar \
+    "--help : echo '--zstd'" \
+    "-c --zstd -f \* \* : echo compressed with native zstd"
+
+  run "${PWD}/compression/zstd_wrapper" compress source target
+  assert_success
+  assert_output --partial "compressed with native zstd"
+
+  unstub tar
+}
+
+@test 'zstd_wrapper falls back to --use-compress-program=zstd when tar does not support --zstd' {
+  # Create a fake zstd binary for command -v to find
+  mkdir -p "${BATS_TEST_TMPDIR}/bin"
+  touch "${BATS_TEST_TMPDIR}/bin/zstd"
+  chmod +x "${BATS_TEST_TMPDIR}/bin/zstd"
+
+  stub tar \
+    "--help : echo 'no zstd support here'" \
+    "-c --use-compress-program=zstd -f \* \* : echo compressed with external zstd"
+
+  run env PATH="${BATS_TEST_TMPDIR}/bin:${BATS_MOCK_BINDIR}:${PATH}" "${PWD}/compression/zstd_wrapper" compress source target
+  assert_success
+  assert_output --partial "compressed with external zstd"
+
+  unstub tar
+}
+
+@test 'zstd_wrapper decompress falls back to --use-compress-program=zstd' {
+  # Create a fake zstd binary for command -v to find
+  mkdir -p "${BATS_TEST_TMPDIR}/bin"
+  touch "${BATS_TEST_TMPDIR}/bin/zstd"
+  chmod +x "${BATS_TEST_TMPDIR}/bin/zstd"
+
+  stub tar \
+    "--help : echo 'no zstd support here'" \
+    "-x --use-compress-program=zstd -f \* \* : echo decompressed with external zstd"
+
+  run env PATH="${BATS_TEST_TMPDIR}/bin:${BATS_MOCK_BINDIR}:${PATH}" "${PWD}/compression/zstd_wrapper" decompress source target
+  assert_success
+  assert_output --partial "decompressed with external zstd"
+
+  unstub tar
+}
+
+@test 'zstd_wrapper fails when neither tar --zstd nor zstd binary available' {
+  stub tar \
+    "--help : echo 'no zstd support here'"
+
+  # Use PATH with mock bindir (for tar stub) and essential utils, but no zstd
+  run env PATH="${BATS_MOCK_BINDIR}:/usr/bin:/bin" "${PWD}/compression/zstd_wrapper" compress source target
+  assert_failure
+  assert_output --partial "zstd compression is not available"
+  assert_output --partial "Either upgrade tar to 1.31+ (with --zstd support) or install the zstd binary"
+
+  unstub tar
+}

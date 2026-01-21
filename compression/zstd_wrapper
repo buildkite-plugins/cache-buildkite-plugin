@@ -9,21 +9,26 @@ is_absolute_path() {
   [ "${1:0:1}" = "/" ]
 }
 
-if ! tar --help | grep -q -- "--zstd"; then
-  echo "tar does not support zstd compression"
-  echo "You need a version of tar with zstd support (tar 1.31 or higher)"
+# Determine how to use zstd compression
+if tar --help | grep -q -- "--zstd"; then
+  ZSTD_OPT="--zstd"
+elif command -v zstd >/dev/null 2>&1; then
+  ZSTD_OPT="--use-compress-program=zstd"
+else
+  echo "zstd compression is not available"
+  echo "Either upgrade tar to 1.31+ (with --zstd support) or install the zstd binary"
   exit 1
 fi
 
 if [ "${OPERATION}" = "compress" ]; then
-    TAR_OPTS=('-c' '--zstd')
+    TAR_OPTS=('-c' "${ZSTD_OPT}")
     if is_absolute_path "${SOURCE}"; then
       TAR_OPTS+=('-P')
     fi
 
     tar "${TAR_OPTS[@]}" -f "${TARGET}" "${SOURCE}"
 elif [ "${OPERATION}" = "decompress" ]; then
-    TAR_OPTS=('-x' '--zstd')
+    TAR_OPTS=('-x' "${ZSTD_OPT}")
     if is_absolute_path "${TARGET}"; then
       TAR_OPTS+=('-P')
     fi
