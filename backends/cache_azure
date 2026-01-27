@@ -32,6 +32,11 @@ az_cmd() {
 
   if [ -n "${BUILDKITE_PLUGIN_AZURE_CACHE_AUTH_MODE}" ]; then
     cmd_args+=(--auth-mode "${BUILDKITE_PLUGIN_AZURE_CACHE_AUTH_MODE}")
+
+    # When using key auth mode, explicitly pass the account key
+    if [ "${BUILDKITE_PLUGIN_AZURE_CACHE_AUTH_MODE}" = "key" ] && [ -n "${AZURE_STORAGE_KEY}" ]; then
+      cmd_args+=(--account-key "${AZURE_STORAGE_KEY}")
+    fi
   fi
 
   "${cmd_args[@]}" "$@"
