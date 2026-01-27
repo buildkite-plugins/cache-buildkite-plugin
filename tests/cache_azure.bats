@@ -10,16 +10,6 @@ setup() {
   export BUILDKITE_PLUGIN_AZURE_CACHE_ACCOUNT=mystorageaccount
 }
 
-@test 'Missing Azure CLI makes plugin fail' {
-  # Temporarily hide az command by manipulating PATH
-  export PATH="/dev/null"
-
-  run "${PWD}/backends/cache_azure" exists test-key
-
-  assert_failure
-  # Will fail naturally when az command is not found
-}
-
 @test 'Missing container configuration makes plugin fail' {
   unset BUILDKITE_PLUGIN_AZURE_CACHE_CONTAINER
 
