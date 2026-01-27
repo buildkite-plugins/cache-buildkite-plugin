@@ -26,7 +26,7 @@ az_cmd() {
   local cmd_args=(az storage blob "${subcommand}")
   cmd_args+=(--account-name "${BUILDKITE_PLUGIN_AZURE_CACHE_ACCOUNT}")
 
-  if [ -n "${BUILDKITE_PLUGIN_AZURE_CACHE_QUIET}" ]; then
+  if [[ "${BUILDKITE_PLUGIN_AZURE_CACHE_QUIET:-false}" =~ ^(true|on|1)$ ]]; then
     # Only upload and download support --no-progress
     if [ "${subcommand}" = "upload" ] || [ "${subcommand}" = "download" ]; then
       cmd_args+=(--no-progress)
@@ -45,7 +45,7 @@ az_cmd() {
 
   # When quiet mode is enabled, suppress stdout (progress bars, JSON output)
   # but preserve stderr (error messages)
-  if [ -n "${BUILDKITE_PLUGIN_AZURE_CACHE_QUIET}" ]; then
+  if [[ "${BUILDKITE_PLUGIN_AZURE_CACHE_QUIET:-false}" =~ ^(true|on|1)$ ]]; then
     "${cmd_args[@]}" "$@" >/dev/null
   else
     "${cmd_args[@]}" "$@"
@@ -74,7 +74,7 @@ azure_exists() {
   list_args+=(--output tsv)
 
   # Note: list command does not support --no-progress
-  if [ -n "${BUILDKITE_PLUGIN_AZURE_CACHE_QUIET}" ]; then
+  if [[ "${BUILDKITE_PLUGIN_AZURE_CACHE_QUIET:-false}" =~ ^(true|on|1)$ ]]; then
     list_args+=(--only-show-errors)
   fi
 
@@ -116,7 +116,7 @@ restore_cache() {
     batch_args+=(--destination "${to}")
     batch_args+=(--pattern "${blob_name}/*")
 
-    if [ -n "${BUILDKITE_PLUGIN_AZURE_CACHE_QUIET}" ]; then
+    if [[ "${BUILDKITE_PLUGIN_AZURE_CACHE_QUIET:-false}" =~ ^(true|on|1)$ ]]; then
       batch_args+=(--no-progress)
       batch_args+=(--only-show-errors)
     fi
@@ -131,7 +131,7 @@ restore_cache() {
     fi
 
     # When quiet mode is enabled, suppress stdout but preserve stderr
-    if [ -n "${BUILDKITE_PLUGIN_AZURE_CACHE_QUIET}" ]; then
+    if [[ "${BUILDKITE_PLUGIN_AZURE_CACHE_QUIET:-false}" =~ ^(true|on|1)$ ]]; then
       "${batch_args[@]}" >/dev/null
     else
       "${batch_args[@]}"
@@ -161,7 +161,7 @@ save_cache() {
     batch_args+=(--destination-path "${blob_name}")
     batch_args+=(--overwrite)
 
-    if [ -n "${BUILDKITE_PLUGIN_AZURE_CACHE_QUIET}" ]; then
+    if [[ "${BUILDKITE_PLUGIN_AZURE_CACHE_QUIET:-false}" =~ ^(true|on|1)$ ]]; then
       batch_args+=(--no-progress)
       batch_args+=(--only-show-errors)
     fi
@@ -176,7 +176,7 @@ save_cache() {
     fi
 
     # When quiet mode is enabled, suppress stdout but preserve stderr
-    if [ -n "${BUILDKITE_PLUGIN_AZURE_CACHE_QUIET}" ]; then
+    if [[ "${BUILDKITE_PLUGIN_AZURE_CACHE_QUIET:-false}" =~ ^(true|on|1)$ ]]; then
       "${batch_args[@]}" >/dev/null
     else
       "${batch_args[@]}"
