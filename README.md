@@ -37,6 +37,7 @@ The plugin supports various backends and compression algorithms, and some enviro
 - `zip/unzip` for zip compression
 - `aws` AWS CLI for reading and writing to an AWS S3 backend
 - `gsutil` or `gcloud storage` Google Cloud SDK CLI for reading and writing to a GCS backend
+- `az` Azure CLI for reading and writing to an Azure Blob Storage backend
 
 ## Mandatory parameters
 
@@ -64,6 +65,7 @@ Defines how the cache is stored and restored. Can be any string (see [Customizab
 * `fs` (default)
 * `s3`
 * `gcs`
+* `azure`
 
 #### `fs`
 
@@ -157,6 +159,128 @@ steps:
     plugins:
       - cache#v1.9.0:
           backend: gcs
+          path: node_modules
+          manifest: package-lock.json
+          restore: file
+          save: file
+          compression: zstd
+```
+
+#### `azure`
+
+Store cache in an Azure Blob Storage container. You need to make sure the `az` command is available and appropriately configured with the necessary credentials and access permissions.
+
+**Azure Authentication**: The backend supports multiple authentication methods. Azure CLI will automatically detect and use available credentials, or you can explicitly specify the authentication method.
+
+**Methods with explicit auth-mode support:**
+- **Microsoft Entra ID (formerly Azure AD)**: Use `az login` and optionally set `BUILDKITE_PLUGIN_AZURE_CACHE_AUTH_MODE=login` to enforce this method
+- **Storage Account Key**: Set `AZURE_STORAGE_KEY` environment variable and optionally set `BUILDKITE_PLUGIN_AZURE_CACHE_AUTH_MODE=key` to enforce this method
+
+**Methods using auto-detection only:**
+- **Connection String**: Set `AZURE_STORAGE_CONNECTION_STRING` environment variable (highest priority in auto-detection)
+- **SAS Token**: Set `AZURE_STORAGE_SAS_TOKEN` environment variable
+
+You also need the agent to have access to the following defined environment variables:
+* `BUILDKITE_PLUGIN_AZURE_CACHE_CONTAINER`: the container name to use (backend will fail if not defined)
+* `BUILDKITE_PLUGIN_AZURE_CACHE_ACCOUNT`: the storage account name (backend will fail if not defined)
+* `BUILDKITE_PLUGIN_AZURE_CACHE_PREFIX`: optional prefix to use for cache keys within the container
+* `BUILDKITE_PLUGIN_AZURE_CACHE_AUTH_MODE`: optional - set to `key` or `login` to enforce a specific authentication method (useful when multiple credentials are present)
+* `BUILDKITE_PLUGIN_AZURE_CACHE_QUIET`: optional - set to `true` to suppress progress bars and JSON metadata output from Azure CLI operations (error messages are still displayed). Defaults to `false`.
+
+#### Example with Storage Account Key
+
+```yaml
+env:
+  BUILDKITE_PLUGIN_AZURE_CACHE_CONTAINER: "my-cache-container" # Required: Azure container to store cache objects
+  BUILDKITE_PLUGIN_AZURE_CACHE_ACCOUNT: "mystorageaccount" # Required: Azure storage account name
+  BUILDKITE_PLUGIN_AZURE_CACHE_PREFIX: "buildkite/cache"
+  BUILDKITE_PLUGIN_AZURE_CACHE_QUIET: "true"
+  BUILDKITE_PLUGIN_AZURE_CACHE_AUTH_MODE: "key" # Use storage account key authentication
+
+steps:
+  - label: ':nodejs: Install dependencies'
+    command: npm ci
+    secrets:
+      - AZURE_STORAGE_KEY
+    plugins:
+      - cache#v1.9.0:
+          backend: azure
+          path: node_modules
+          manifest: package-lock.json
+          restore: file
+          save: file
+          compression: zstd
+```
+
+#### Example with Microsoft Entra ID
+
+**Note**: Microsoft Entra ID authentication requires authenticating with Azure before using the cache plugin. You can use `az login` in your agent setup, or use a plugin like [azure-login](https://github.com/buildkite-plugins/azure-login-buildkite-plugin) to authenticate with a managed identity. The authenticated identity must have the appropriate RBAC role (such as "Storage Blob Data Contributor") assigned to the storage account.
+
+```yaml
+env:
+  BUILDKITE_PLUGIN_AZURE_CACHE_CONTAINER: "my-cache-container" # Required: Azure container to store cache objects
+  BUILDKITE_PLUGIN_AZURE_CACHE_ACCOUNT: "mystorageaccount" # Required: Azure storage account name
+  BUILDKITE_PLUGIN_AZURE_CACHE_PREFIX: "buildkite/cache"
+  BUILDKITE_PLUGIN_AZURE_CACHE_QUIET: "true"
+  BUILDKITE_PLUGIN_AZURE_CACHE_AUTH_MODE: "login" # Use Microsoft Entra ID authentication
+
+steps:
+  - label: ':nodejs: Install dependencies'
+    command: npm ci
+    plugins:
+      - azure-login#v1.0.1:  # Authenticate with managed identity first
+          use-identity: true
+          client-id: your-managed-identity-client-id
+      - cache#v1.9.0:
+          backend: azure
+          path: node_modules
+          manifest: package-lock.json
+          restore: file
+          save: file
+          compression: zstd
+```
+
+#### Example with Connection String
+
+```yaml
+env:
+  BUILDKITE_PLUGIN_AZURE_CACHE_CONTAINER: "my-cache-container" # Required: Azure container to store cache objects
+  BUILDKITE_PLUGIN_AZURE_CACHE_ACCOUNT: "mystorageaccount" # Required: Azure storage account name
+  BUILDKITE_PLUGIN_AZURE_CACHE_PREFIX: "buildkite/cache"
+  BUILDKITE_PLUGIN_AZURE_CACHE_QUIET: "true"
+
+steps:
+  - label: ':nodejs: Install dependencies'
+    command: npm ci
+    secrets:
+      - AZURE_STORAGE_CONNECTION_STRING
+    plugins:
+      - cache#v1.9.0:
+          backend: azure
+          path: node_modules
+          manifest: package-lock.json
+          restore: file
+          save: file
+          compression: zstd
+```
+
+#### Example with SAS Token
+
+```yaml
+env:
+  BUILDKITE_PLUGIN_AZURE_CACHE_CONTAINER: "my-cache-container" # Required: Azure container to store cache objects
+  BUILDKITE_PLUGIN_AZURE_CACHE_ACCOUNT: "mystorageaccount" # Required: Azure storage account name
+  BUILDKITE_PLUGIN_AZURE_CACHE_PREFIX: "buildkite/cache"
+  BUILDKITE_PLUGIN_AZURE_CACHE_QUIET: "true"
+
+steps:
+  - label: ':nodejs: Install dependencies'
+    command: npm ci
+    secrets:
+      - AZURE_STORAGE_SAS_TOKEN
+    plugins:
+      - cache#v1.9.0:
+          backend: azure
           path: node_modules
           manifest: package-lock.json
           restore: file
