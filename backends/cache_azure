@@ -69,6 +69,11 @@ azure_exists() {
 
   if [ -n "${BUILDKITE_PLUGIN_AZURE_CACHE_AUTH_MODE}" ]; then
     list_args+=(--auth-mode "${BUILDKITE_PLUGIN_AZURE_CACHE_AUTH_MODE}")
+
+    # When using key auth mode, explicitly pass the account key
+    if [ "${BUILDKITE_PLUGIN_AZURE_CACHE_AUTH_MODE}" = "key" ] && [ -n "${AZURE_STORAGE_KEY}" ]; then
+      list_args+=(--account-key "${AZURE_STORAGE_KEY}")
+    fi
   fi
 
   local result
@@ -106,6 +111,11 @@ restore_cache() {
 
     if [ -n "${BUILDKITE_PLUGIN_AZURE_CACHE_AUTH_MODE}" ]; then
       batch_args+=(--auth-mode "${BUILDKITE_PLUGIN_AZURE_CACHE_AUTH_MODE}")
+
+      # When using key auth mode, explicitly pass the account key
+      if [ "${BUILDKITE_PLUGIN_AZURE_CACHE_AUTH_MODE}" = "key" ] && [ -n "${AZURE_STORAGE_KEY}" ]; then
+        batch_args+=(--account-key "${AZURE_STORAGE_KEY}")
+      fi
     fi
 
     "${batch_args[@]}"
@@ -140,6 +150,11 @@ save_cache() {
 
     if [ -n "${BUILDKITE_PLUGIN_AZURE_CACHE_AUTH_MODE}" ]; then
       batch_args+=(--auth-mode "${BUILDKITE_PLUGIN_AZURE_CACHE_AUTH_MODE}")
+
+      # When using key auth mode, explicitly pass the account key
+      if [ "${BUILDKITE_PLUGIN_AZURE_CACHE_AUTH_MODE}" = "key" ] && [ -n "${AZURE_STORAGE_KEY}" ]; then
+        batch_args+=(--account-key "${AZURE_STORAGE_KEY}")
+      fi
     fi
 
     "${batch_args[@]}"
