@@ -25,9 +25,12 @@ az_cmd() {
 
   local cmd_args=(az storage blob "${subcommand}")
   cmd_args+=(--account-name "${BUILDKITE_PLUGIN_AZURE_CACHE_ACCOUNT}")
-  cmd_args+=(--no-progress)
 
   if [ -n "${BUILDKITE_PLUGIN_AZURE_CACHE_QUIET}" ]; then
+    # Only upload and download support --no-progress
+    if [ "${subcommand}" = "upload" ] || [ "${subcommand}" = "download" ]; then
+      cmd_args+=(--no-progress)
+    fi
     cmd_args+=(--only-show-errors)
   fi
 
@@ -69,8 +72,8 @@ azure_exists() {
   list_args+=(--num-results 1)
   list_args+=(--query '[0].name')
   list_args+=(--output tsv)
-  list_args+=(--no-progress)
 
+  # Note: list command does not support --no-progress
   if [ -n "${BUILDKITE_PLUGIN_AZURE_CACHE_QUIET}" ]; then
     list_args+=(--only-show-errors)
   fi
@@ -112,9 +115,9 @@ restore_cache() {
     batch_args+=(--source "${BUILDKITE_PLUGIN_AZURE_CACHE_CONTAINER}")
     batch_args+=(--destination "${to}")
     batch_args+=(--pattern "${blob_name}/*")
-    batch_args+=(--no-progress)
 
     if [ -n "${BUILDKITE_PLUGIN_AZURE_CACHE_QUIET}" ]; then
+      batch_args+=(--no-progress)
       batch_args+=(--only-show-errors)
     fi
 
@@ -157,9 +160,9 @@ save_cache() {
     batch_args+=(--source "${from}")
     batch_args+=(--destination-path "${blob_name}")
     batch_args+=(--overwrite)
-    batch_args+=(--no-progress)
 
     if [ -n "${BUILDKITE_PLUGIN_AZURE_CACHE_QUIET}" ]; then
+      batch_args+=(--no-progress)
       batch_args+=(--only-show-errors)
     fi
 
