@@ -1,0 +1,208 @@
+#!/bin/bash
+
+# Validate required configuration
+if [ -z "${BUILDKITE_PLUGIN_AZURE_CACHE_CONTAINER}" ]; then
+  echo '+++ 🚨 Missing Azure container configuration'
+  exit 1
+fi
+
+if [ -z "${BUILDKITE_PLUGIN_AZURE_CACHE_ACCOUNT}" ]; then
+  echo '+++ 🚨 Missing Azure storage account configuration'
+  exit 1
+fi
+
+build_key() {
+  if [ -n "${BUILDKITE_PLUGIN_AZURE_CACHE_PREFIX}" ]; then
+    echo "${BUILDKITE_PLUGIN_AZURE_CACHE_PREFIX}/${1}"
+  else
+    echo "$1"
+  fi
+}
+
+az_cmd() {
+  local subcommand="$1"
+  shift
+
+  local cmd_args=(az storage blob "${subcommand}")
+  cmd_args+=(--account-name "${BUILDKITE_PLUGIN_AZURE_CACHE_ACCOUNT}")
+
+  if [[ "${BUILDKITE_PLUGIN_AZURE_CACHE_QUIET:-false}" =~ ^(true|on|1)$ ]]; then
+    # Only upload and download support --no-progress
+    if [ "${subcommand}" = "upload" ] || [ "${subcommand}" = "download" ]; then
+      cmd_args+=(--no-progress)
+    fi
+    cmd_args+=(--only-show-errors)
+  fi
+
+  if [ -n "${BUILDKITE_PLUGIN_AZURE_CACHE_AUTH_MODE}" ]; then
+    cmd_args+=(--auth-mode "${BUILDKITE_PLUGIN_AZURE_CACHE_AUTH_MODE}")
+
+    # When using key auth mode, explicitly pass the account key
+    if [ "${BUILDKITE_PLUGIN_AZURE_CACHE_AUTH_MODE}" = "key" ] && [ -n "${AZURE_STORAGE_KEY}" ]; then
+      cmd_args+=(--account-key "${AZURE_STORAGE_KEY}")
+    fi
+  fi
+
+  # When quiet mode is enabled, suppress stdout (progress bars, JSON output)
+  # but preserve stderr (error messages)
+  if [[ "${BUILDKITE_PLUGIN_AZURE_CACHE_QUIET:-false}" =~ ^(true|on|1)$ ]]; then
+    "${cmd_args[@]}" "$@" >/dev/null
+  else
+    "${cmd_args[@]}" "$@"
+  fi
+}
+
+azure_exists() {
+  local key="$1"
+  local blob_name
+  blob_name="$(build_key "${key}")"
+
+  # Try to check if exact blob exists
+  if az_cmd show \
+    --container-name "${BUILDKITE_PLUGIN_AZURE_CACHE_CONTAINER}" \
+    --name "${blob_name}" &>/dev/null; then
+    return 0
+  fi
+
+  # Check if it's a directory-like prefix (with trailing slash)
+  local list_args=(az storage blob list)
+  list_args+=(--container-name "${BUILDKITE_PLUGIN_AZURE_CACHE_CONTAINER}")
+  list_args+=(--account-name "${BUILDKITE_PLUGIN_AZURE_CACHE_ACCOUNT}")
+  list_args+=(--prefix "${blob_name}/")
+  list_args+=(--num-results 1)
+  list_args+=(--query '[0].name')
+  list_args+=(--output tsv)
+
+  # Note: list command does not support --no-progress
+  if [[ "${BUILDKITE_PLUGIN_AZURE_CACHE_QUIET:-false}" =~ ^(true|on|1)$ ]]; then
+    list_args+=(--only-show-errors)
+  fi
+
+  if [ -n "${BUILDKITE_PLUGIN_AZURE_CACHE_AUTH_MODE}" ]; then
+    list_args+=(--auth-mode "${BUILDKITE_PLUGIN_AZURE_CACHE_AUTH_MODE}")
+
+    # When using key auth mode, explicitly pass the account key
+    if [ "${BUILDKITE_PLUGIN_AZURE_CACHE_AUTH_MODE}" = "key" ] && [ -n "${AZURE_STORAGE_KEY}" ]; then
+      list_args+=(--account-key "${AZURE_STORAGE_KEY}")
+    fi
+  fi
+
+  local result
+  result=$("${list_args[@]}" 2>/dev/null)
+
+  [ -n "${result}" ]
+}
+
+restore_cache() {
+  local from="$1"
+  local to="$2"
+  local blob_name
+  blob_name="$(build_key "${from}")"
+
+  # Check if it's a single blob or a directory
+  if az_cmd show \
+    --container-name "${BUILDKITE_PLUGIN_AZURE_CACHE_CONTAINER}" \
+    --name "${blob_name}" &>/dev/null; then
+    # Single file - use download
+    az_cmd download \
+      --container-name "${BUILDKITE_PLUGIN_AZURE_CACHE_CONTAINER}" \
+      --name "${blob_name}" \
+      --file "${to}"
+  else
+    # Directory - use download-batch
+    local batch_args=(az storage blob download-batch)
+    batch_args+=(--account-name "${BUILDKITE_PLUGIN_AZURE_CACHE_ACCOUNT}")
+    batch_args+=(--source "${BUILDKITE_PLUGIN_AZURE_CACHE_CONTAINER}")
+    batch_args+=(--destination "${to}")
+    batch_args+=(--pattern "${blob_name}/*")
+
+    if [[ "${BUILDKITE_PLUGIN_AZURE_CACHE_QUIET:-false}" =~ ^(true|on|1)$ ]]; then
+      batch_args+=(--no-progress)
+      batch_args+=(--only-show-errors)
+    fi
+
+    if [ -n "${BUILDKITE_PLUGIN_AZURE_CACHE_AUTH_MODE}" ]; then
+      batch_args+=(--auth-mode "${BUILDKITE_PLUGIN_AZURE_CACHE_AUTH_MODE}")
+
+      # When using key auth mode, explicitly pass the account key
+      if [ "${BUILDKITE_PLUGIN_AZURE_CACHE_AUTH_MODE}" = "key" ] && [ -n "${AZURE_STORAGE_KEY}" ]; then
+        batch_args+=(--account-key "${AZURE_STORAGE_KEY}")
+      fi
+    fi
+
+    # When quiet mode is enabled, suppress stdout but preserve stderr
+    if [[ "${BUILDKITE_PLUGIN_AZURE_CACHE_QUIET:-false}" =~ ^(true|on|1)$ ]]; then
+      "${batch_args[@]}" >/dev/null
+    else
+      "${batch_args[@]}"
+    fi
+  fi
+}
+
+save_cache() {
+  local to="$1"
+  local from="$2"
+  local blob_name
+  blob_name="$(build_key "${to}")"
+
+  if [ ! -e "${from}" ]; then
+    echo "+++ 🚨 Cache source path does not exist: ${from}" >&2
+    return 1
+  fi
+
+  if [ -f "${from}" ]; then
+    # Single file - use upload
+    az_cmd upload \
+      --container-name "${BUILDKITE_PLUGIN_AZURE_CACHE_CONTAINER}" \
+      --name "${blob_name}" \
+      --file "${from}" \
+      --overwrite
+  else
+    # Directory - use upload-batch
+    local batch_args=(az storage blob upload-batch)
+    batch_args+=(--account-name "${BUILDKITE_PLUGIN_AZURE_CACHE_ACCOUNT}")
+    batch_args+=(--destination "${BUILDKITE_PLUGIN_AZURE_CACHE_CONTAINER}")
+    batch_args+=(--source "${from}")
+    batch_args+=(--destination-path "${blob_name}")
+    batch_args+=(--overwrite)
+
+    if [[ "${BUILDKITE_PLUGIN_AZURE_CACHE_QUIET:-false}" =~ ^(true|on|1)$ ]]; then
+      batch_args+=(--no-progress)
+      batch_args+=(--only-show-errors)
+    fi
+
+    if [ -n "${BUILDKITE_PLUGIN_AZURE_CACHE_AUTH_MODE}" ]; then
+      batch_args+=(--auth-mode "${BUILDKITE_PLUGIN_AZURE_CACHE_AUTH_MODE}")
+
+      # When using key auth mode, explicitly pass the account key
+      if [ "${BUILDKITE_PLUGIN_AZURE_CACHE_AUTH_MODE}" = "key" ] && [ -n "${AZURE_STORAGE_KEY}" ]; then
+        batch_args+=(--account-key "${AZURE_STORAGE_KEY}")
+      fi
+    fi
+
+    # When quiet mode is enabled, suppress stdout but preserve stderr
+    if [[ "${BUILDKITE_PLUGIN_AZURE_CACHE_QUIET:-false}" =~ ^(true|on|1)$ ]]; then
+      "${batch_args[@]}" >/dev/null
+    else
+      "${batch_args[@]}"
+    fi
+  fi
+}
+
+exists_cache() {
+  if [ -z "$1" ]; then exit 1; fi
+  azure_exists "$1"
+}
+
+OPCODE="$1"
+shift
+
+if [ "$OPCODE" = 'exists' ]; then
+  exists_cache "$@"
+elif [ "$OPCODE" = 'get' ]; then
+  restore_cache "$@"
+elif [ "$OPCODE" = 'save' ]; then
+  save_cache "$@"
+else
+  exit 255
+fi
