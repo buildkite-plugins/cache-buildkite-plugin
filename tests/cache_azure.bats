@@ -55,6 +55,13 @@ setup() {
   unstub az
 }
 
+@test 'Save fails with clear error when source path does not exist' {
+  run "${PWD}/backends/cache_azure" save cache-key /path/that/does/not/exist
+
+  assert_failure
+  assert_output --partial 'Cache source path does not exist'
+}
+
 @test 'Exists on existing file/folder works' {
   stub az \
     'storage blob show --account-name \* --container-name \* --name \* : true'
