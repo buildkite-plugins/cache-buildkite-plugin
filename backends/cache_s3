@@ -72,19 +72,73 @@ restore_cache() {
     sync=true
   fi
 
-  # can not use sync as it may be a single file
-  s3_copy "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/${key}" "${to}" "${sync}"
+  # A concurrent save can overwrite the object while it is being downloaded. The
+  # AWS CLI guards multipart downloads with an `If-Match` on the ETag recorded by
+  # its initial HEAD, so an overwrite mid-download fails with "did not match
+  # expected ETag". Because cache keys are content-addressed, the rewritten
+  # object has identical contents, so retrying resolves the transient failure.
+  local attempts="${BUILDKITE_PLUGIN_S3_CACHE_DOWNLOAD_RETRIES:-3}"
+  local attempt=1
+  while true; do
+    # can not use sync as it may be a single file
+    if s3_copy "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/${key}" "${to}" "${sync}"; then
+      return 0
+    fi
+
+    if [ "${attempt}" -ge "${attempts}" ]; then
+      return 1
+    fi
+
+    echo "~~~ :warning: Cache download failed (attempt ${attempt}/${attempts}), retrying (object may have been rewritten by a concurrent save)" >&2
+    attempt=$((attempt + 1))
+    sleep 1
+  done
 }
 
 save_cache() {
   local to="$1"
   local from="$2"
-  local use_sync='true'
-  if [ -f "${from}" ]; then
-    use_sync='false'
+  local key
+  key="$(build_key "${to}")"
+
+  # Folders must be uploaded with `sync`; conditional writes only apply to a
+  # single object, so fall back to the previous behaviour for directories.
+  if [ ! -f "${from}" ]; then
+    s3_copy "${from}" "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/${key}" 'true'
+    return $?
   fi
 
-  s3_copy "${from}" "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/$(build_key "${to}")" "${use_sync}"
+  # When `force` is requested the caller explicitly wants to replace the object,
+  # so overwrite it instead of using a conditional create (which would refuse).
+  if [ "${BUILDKITE_PLUGIN_CACHE_FORCE:-false}" != 'false' ]; then
+    s3_copy "${from}" "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/${key}" 'false'
+    return $?
+  fi
+
+  # Single file: store it with a conditional create (`--if-none-match '*'`) so
+  # two jobs racing to save the same content-addressed key cannot overwrite each
+  # other (first write wins). Without this, a later overwrite changes the ETag
+  # and breaks any download already in flight. A `PreconditionFailed` response
+  # means another job already stored the object, which is success for us.
+  local output
+  if output="$(aws_cmd s3api put-object \
+    --bucket "${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}" \
+    --key "${key}" \
+    --if-none-match '*' \
+    --body "${from}" 2>&1)"; then
+    return 0
+  fi
+
+  if echo "${output}" | grep -qe 'PreconditionFailed' -e 'pre-conditions'; then
+    echo "Cache already saved by a concurrent job, skipping"
+    return 0
+  fi
+
+  # The conditional create is unsupported (older CLI / S3-compatible endpoint) or
+  # the object is too large for a single PUT: fall back to a normal copy.
+  echo "${output}" >&2
+  echo "~~~ :warning: Conditional cache upload unavailable, falling back to copy" >&2
+  s3_copy "${from}" "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/${key}" 'false'
 }
 
 exists_cache() {

@@ -141,7 +141,7 @@ setup() {
   mkdir "${BATS_TEST_TMPDIR}/s3-cache"
   stub aws \
     "echo null" \
-    "s3 cp \* \* : ln -s \$3 $BATS_TEST_TMPDIR/s3-cache/\$(echo \$4 | md5sum | cut -c-32)" \
+    "s3api put-object --bucket \* --key \* --if-none-match \* --body \* : cp \${10} $BATS_TEST_TMPDIR/s3-cache/\$(echo s3://\$4/\$6 | md5sum | cut -c-32)" \
     "echo 'exists'" \
     's3api head-object --bucket \* --key \* : true ' \
     "s3 cp \* \* : cp -r $BATS_TEST_TMPDIR/s3-cache/\$(echo \$3 | md5sum | cut -c-32) \$4"
@@ -213,4 +213,101 @@ setup() {
   rm -rf "${BATS_TEST_TMPDIR}/s3-cache"
   rm -rf "${BATS_TEST_TMPDIR}/new-folder"
   rm -rf "${BATS_TEST_TMPDIR}/other-folder"
+}
+
+@test 'Single file save uses a conditional put-object' {
+  touch "${BATS_TEST_TMPDIR}/file-to-save"
+
+  stub aws \
+    's3api put-object --bucket my-bucket --key \* --if-none-match \* --body \* : echo stored'
+
+  run "${PWD}/backends/cache_s3" save my-key "${BATS_TEST_TMPDIR}/file-to-save"
+
+  assert_success
+  assert_output ''
+
+  unstub aws
+  rm -f "${BATS_TEST_TMPDIR}/file-to-save"
+}
+
+@test 'Single file save with force overwrites instead of conditional create' {
+  export BUILDKITE_PLUGIN_CACHE_FORCE=true
+  touch "${BATS_TEST_TMPDIR}/file-to-save"
+
+  stub aws \
+    's3 cp \* \* : echo copied'
+
+  run "${PWD}/backends/cache_s3" save my-key "${BATS_TEST_TMPDIR}/file-to-save"
+
+  assert_success
+
+  unstub aws
+  rm -f "${BATS_TEST_TMPDIR}/file-to-save"
+  unset BUILDKITE_PLUGIN_CACHE_FORCE
+}
+
+@test 'Single file save treats PreconditionFailed as success (concurrent writer won)' {
+  touch "${BATS_TEST_TMPDIR}/file-to-save"
+
+  stub aws \
+    's3api put-object --bucket my-bucket --key \* --if-none-match \* --body \* : echo "An error occurred (PreconditionFailed) when calling the PutObject operation" >&2; exit 1'
+
+  run "${PWD}/backends/cache_s3" save my-key "${BATS_TEST_TMPDIR}/file-to-save"
+
+  assert_success
+  assert_output --partial 'Cache already saved by a concurrent job'
+
+  unstub aws
+  rm -f "${BATS_TEST_TMPDIR}/file-to-save"
+}
+
+@test 'Single file save falls back to copy when conditional put is unsupported' {
+  touch "${BATS_TEST_TMPDIR}/file-to-save"
+
+  stub aws \
+    's3api put-object --bucket my-bucket --key \* --if-none-match \* --body \* : echo "Unknown options: --if-none-match" >&2; exit 255' \
+    's3 cp \* \* : echo copied'
+
+  run "${PWD}/backends/cache_s3" save my-key "${BATS_TEST_TMPDIR}/file-to-save"
+
+  assert_success
+  assert_output --partial 'falling back to copy'
+
+  unstub aws
+  rm -f "${BATS_TEST_TMPDIR}/file-to-save"
+}
+
+@test 'Restore retries when a download fails then succeeds' {
+  export BUILDKITE_PLUGIN_S3_CACHE_DOWNLOAD_RETRIES=3
+
+  stub sleep '1 : true'
+  stub aws \
+    's3api head-object --bucket \* --key \* : true ' \
+    's3 cp \* \* : echo "did not match expected ETag" >&2; exit 1' \
+    's3 cp \* \* : echo restored'
+
+  run "${PWD}/backends/cache_s3" get my-key "${BATS_TEST_TMPDIR}/dest"
+
+  assert_success
+  assert_output --partial 'retrying'
+
+  unstub aws
+  unstub sleep
+}
+
+@test 'Restore fails after exhausting retries' {
+  export BUILDKITE_PLUGIN_S3_CACHE_DOWNLOAD_RETRIES=2
+
+  stub sleep '1 : true'
+  stub aws \
+    's3api head-object --bucket \* --key \* : true ' \
+    's3 cp \* \* : echo "did not match expected ETag" >&2; exit 1' \
+    's3 cp \* \* : echo "did not match expected ETag" >&2; exit 1'
+
+  run "${PWD}/backends/cache_s3" get my-key "${BATS_TEST_TMPDIR}/dest"
+
+  assert_failure
+
+  unstub aws
+  unstub sleep
 }
