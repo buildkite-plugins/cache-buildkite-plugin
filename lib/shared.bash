@@ -68,6 +68,34 @@ backend_exec() {
   PATH="${PATH}:${DIR}/../backends" "cache_${BACKEND_NAME}" "$@"
 }
 
+# Runs a command, retrying it up to the configured number of attempts (default 1)
+retry_exec() {
+  local operation="$1"
+  shift
+
+  local attempts
+  attempts=$(plugin_read_config RETRIES '1')
+
+  local attempt=1
+  local status=0
+  while true; do
+    if "$@"; then
+      return 0
+    else
+      status=$?
+    fi
+
+    # return the original exit code so soft-fail can detect signals (>= 128)
+    if [ "${attempt}" -ge "${attempts}" ]; then
+      return "${status}"
+    fi
+
+    echo "--- :warning: Cache ${operation} failed (attempt ${attempt}/${attempts}), retrying" >&2
+    attempt=$((attempt + 1))
+    sleep 1
+  done
+}
+
 # Executes a command with soft-fail handling
 # If soft-fail is enabled and the command fails, warns and exits 0
 # Otherwise, propagates the failure

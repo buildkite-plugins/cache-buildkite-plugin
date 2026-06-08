@@ -219,6 +219,57 @@ teardown() {
   unstub cache_dummy
 }
 
+@test "Save retries on failure then succeeds" {
+  export BUILDKITE_PLUGIN_CACHE_SAVE=step
+  export BUILDKITE_PLUGIN_CACHE_RETRIES=2
+
+  stub sleep '1 : true'
+  stub cache_dummy \
+    'save \* \* : exit 1' \
+    "save \* \* : echo saving \$3 in \$2"
+
+  run "$PWD/hooks/post-command"
+
+  assert_success
+  assert_output --partial 'Cache save failed (attempt 1/2), retrying'
+  assert_output --partial 'Saving step-level cache'
+
+  unstub cache_dummy
+  unstub sleep
+}
+
+@test "Save fails after exhausting retries" {
+  export BUILDKITE_PLUGIN_CACHE_SAVE=step
+  export BUILDKITE_PLUGIN_CACHE_RETRIES=2
+
+  stub sleep '1 : true'
+  stub cache_dummy \
+    'save \* \* : exit 1' \
+    'save \* \* : exit 1'
+
+  run "$PWD/hooks/post-command"
+
+  assert_failure
+  assert_output --partial 'retrying'
+
+  unstub cache_dummy
+  unstub sleep
+}
+
+@test "Save does not retry by default" {
+  export BUILDKITE_PLUGIN_CACHE_SAVE=step
+
+  stub cache_dummy \
+    'save \* \* : exit 1'
+
+  run "$PWD/hooks/post-command"
+
+  assert_failure
+  refute_output --partial 'retrying'
+
+  unstub cache_dummy
+}
+
 @test "Multiple level saving lower level change forces higher levels" {
   export BUILDKITE_PLUGIN_CACHE_FORCE=false
 

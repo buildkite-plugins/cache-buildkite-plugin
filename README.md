@@ -105,17 +105,8 @@ You also need the agent to have access to the following defined environment vari
 * `BUILDKITE_PLUGIN_S3_CACHE_PREFIX`: optional prefix to use for the cache within the bucket
 * `BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT`: optional S3 custom endpoint to use
 * `BUILDKITE_PLUGIN_S3_CACHE_PROFILE`: optional profile (that [must exist in the agent's config](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-role.html)) to use for CLI calls
-* `BUILDKITE_PLUGIN_S3_CACHE_DOWNLOAD_RETRIES`: optional number of attempts when restoring an object (default `3`). A download is retried if a concurrent save overwrites the object mid-transfer (see [Concurrent saves](#concurrent-saves)).
 
 Setting the `BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS` environment variable will reduce logging of file operations towards S3.
-
-##### Concurrent saves
-
-Cache keys are content-addressed, so multiple agents running the same step in parallel compute the **same** S3 key. To keep these races safe:
-
-* **Saving** a single object uses a conditional create (`aws s3api put-object --if-none-match '*'`). The first writer wins and later writers get a `PreconditionFailed`, which is treated as success — the object is never overwritten, so its `ETag` stays stable. If the endpoint or CLI does not support conditional writes (or the object exceeds the single-`PUT` limit), the plugin falls back to a normal copy.
-* **Restoring** retries on the AWS CLI's `did not match expected ETag` error. This error happens when an object is overwritten while a multipart download is in flight; because the key is content-addressed the retried download returns identical contents.
-
 
 #### Example
 
@@ -312,6 +303,12 @@ The plugin includes wrappers to provide both examples and backwards-compatibilit
 ### `force` (boolean, save only)
 
 Force saving the cache even if it exists. Default: `false`.
+
+### `retries` (integer)
+
+Number of attempts for each cache save and restore operation. Default: `1` (no retry).
+
+Retries can help with transient backend failures. For example, cache keys are content-addressed, so multiple agents running the same step in parallel compute the same key; if a save overwrites an object while another agent is downloading it, the restore can fail mid-transfer (the `s3` backend surfaces this as `did not match expected ETag`). Because the key is content-addressed, the retried transfer returns identical contents.
 
 ### `soft-fail` (boolean)
 
