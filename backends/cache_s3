@@ -79,12 +79,7 @@ restore_cache() {
   # object has identical contents, so retrying resolves the transient failure.
   local attempts="${BUILDKITE_PLUGIN_S3_CACHE_DOWNLOAD_RETRIES:-3}"
   local attempt=1
-  while true; do
-    # can not use sync as it may be a single file
-    if s3_copy "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/${key}" "${to}" "${sync}"; then
-      return 0
-    fi
-
+  while ! s3_copy "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/${key}" "${to}" "${sync}"; then
     if [ "${attempt}" -ge "${attempts}" ]; then
       return 1
     fi
@@ -93,6 +88,8 @@ restore_cache() {
     attempt=$((attempt + 1))
     sleep 1
   done
+  
+  return 0
 }
 
 save_cache() {
