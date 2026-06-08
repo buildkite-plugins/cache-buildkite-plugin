@@ -33,6 +33,8 @@ configuration:
             type: string
     path:
       type: string
+    retries:
+      type: integer
     restore:
       $ref: '#/$defs/valid_levels'
     save:

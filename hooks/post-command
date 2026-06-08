@@ -83,7 +83,7 @@ perform_save() {
         compress "${CACHE_PATH}" "${ACTUAL_PATH}" || return $?
         already_compressed='true' # avoid re-compressing the files
       fi
-      backend_exec save "${KEY}" "${ACTUAL_PATH}" || return $?
+      retry_exec save backend_exec save "${KEY}" "${ACTUAL_PATH}" || return $?
       lower_level_updated='true' # to force saving higher levels
     else
       echo "Cache of ${LEVEL} already exists, skipping"

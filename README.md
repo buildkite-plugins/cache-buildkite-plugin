@@ -108,7 +108,6 @@ You also need the agent to have access to the following defined environment vari
 
 Setting the `BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS` environment variable will reduce logging of file operations towards S3.
 
-
 #### Example
 
 ```yaml
@@ -304,6 +303,12 @@ The plugin includes wrappers to provide both examples and backwards-compatibilit
 ### `force` (boolean, save only)
 
 Force saving the cache even if it exists. Default: `false`.
+
+### `retries` (integer)
+
+Number of attempts for each cache save and restore operation. Default: `1` (no retry).
+
+Retries can help with transient backend failures. For example, cache keys are content-addressed, so multiple agents running the same step in parallel compute the same key; if a save overwrites an object while another agent is downloading it, the restore can fail mid-transfer (the `s3` backend surfaces this as `did not match expected ETag`). Because the key is content-addressed, the retried transfer returns identical contents.
 
 ### `soft-fail` (boolean)
 
