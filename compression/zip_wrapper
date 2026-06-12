@@ -6,7 +6,11 @@ SOURCE=${2?Source not specified}
 TARGET=${3?Target not specified}
 
 is_absolute_path() {
-  [ "${1:0:1}" = "/" ]
+  case "$1" in
+    /*) return 0 ;;
+    [A-Za-z]:[\\/]*) return 0 ;;
+    *) return 1 ;;
+  esac
 }
 
 if [ "${OPERATION}" = "compress" ]; then
