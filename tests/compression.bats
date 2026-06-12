@@ -164,3 +164,68 @@ setup() {
 
   unstub tar
 }
+
+@test 'zstd_wrapper treats Windows drive paths as absolute' {
+  stub tar \
+    "--help : echo '--zstd'" \
+    "-c --zstd -P -f archive.tzst C:/cache/foo : echo compressed windows absolute" \
+    "--help : echo '--zstd'" \
+    "-x --zstd -P -f archive.tzst C:/cache/foo : echo decompressed windows absolute"
+
+  run "${PWD}/compression/zstd_wrapper" compress "C:/cache/foo" archive.tzst
+  assert_success
+  assert_output --partial "compressed windows absolute"
+
+  run "${PWD}/compression/zstd_wrapper" decompress archive.tzst "C:/cache/foo"
+  assert_success
+  assert_output --partial "decompressed windows absolute"
+
+  unstub tar
+}
+
+@test 'tgz_wrapper treats Windows drive paths as absolute' {
+  stub tar \
+    "czPf archive.tgz C:/cache/foo : echo compressed windows absolute" \
+    "xzPf archive.tgz C:/cache/foo : echo decompressed windows absolute"
+
+  run "${PWD}/compression/tgz_wrapper" compress "C:/cache/foo" archive.tgz
+  assert_success
+  assert_output --partial "compressed windows absolute"
+
+  run "${PWD}/compression/tgz_wrapper" decompress archive.tgz "C:/cache/foo"
+  assert_success
+  assert_output --partial "decompressed windows absolute"
+
+  unstub tar
+}
+
+@test 'zip_wrapper treats Windows drive paths as absolute' {
+  cd "${BATS_TEST_TMPDIR}"
+  mkdir -p "C:/cache"
+
+  stub zip \
+    "-r ${BATS_TEST_TMPDIR}/archive.zip C:/cache/foo : echo compressed windows absolute"
+  stub mv \
+    "${BATS_TEST_TMPDIR}/archive.zip ${BATS_TEST_TMPDIR}/archive : echo moved compressed archive"
+  stub cp \
+    "${BATS_TEST_TMPDIR}/archive C:/cache/compressed.zip : echo copied archive for windows absolute restore"
+  stub unzip \
+    "-o compressed.zip : echo decompressed windows absolute"
+  stub rm \
+    "compressed.zip : echo removed temporary zip"
+
+  run "${OLDPWD}/compression/zip_wrapper" compress "C:/cache/foo" "${BATS_TEST_TMPDIR}/archive"
+  assert_success
+  assert_output --partial "compressed windows absolute"
+
+  touch "${BATS_TEST_TMPDIR}/archive"
+  run "${OLDPWD}/compression/zip_wrapper" decompress "${BATS_TEST_TMPDIR}/archive" "C:/cache/foo"
+  assert_success
+  assert_output --partial "decompressed windows absolute"
+
+  unstub rm
+  unstub unzip
+  unstub cp
+  unstub mv
+  unstub zip
+}
