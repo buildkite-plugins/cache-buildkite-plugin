@@ -108,6 +108,7 @@ setup() {
 
 @test 'zstd_wrapper uses --zstd when tar supports it' {
   stub tar \
+    "--version : echo 'tar (GNU tar) 1.35'" \
     "--help : echo '--zstd'" \
     "-c --zstd -f \* \* : echo compressed with native zstd"
 
@@ -125,6 +126,7 @@ setup() {
   chmod +x "${BATS_TEST_TMPDIR}/bin/zstd"
 
   stub tar \
+    "--version : echo 'tar (GNU tar) 1.35'" \
     "--help : echo 'no zstd support here'" \
     "-c --use-compress-program=zstd -f \* \* : echo compressed with external zstd"
 
@@ -142,6 +144,7 @@ setup() {
   chmod +x "${BATS_TEST_TMPDIR}/bin/zstd"
 
   stub tar \
+    "--version : echo 'tar (GNU tar) 1.35'" \
     "--help : echo 'no zstd support here'" \
     "-x --use-compress-program=zstd -f \* \* : echo decompressed with external zstd"
 
@@ -154,6 +157,7 @@ setup() {
 
 @test 'zstd_wrapper fails when neither tar --zstd nor zstd binary available' {
   stub tar \
+    "--version : echo 'tar (GNU tar) 1.35'" \
     "--help : echo 'no zstd support here'"
 
   # Use PATH with mock bindir (for tar stub) and essential utils, but no zstd
@@ -167,6 +171,7 @@ setup() {
 
 @test 'zstd_wrapper treats Windows drive paths as absolute' {
   stub tar \
+    "--version : echo 'tar (GNU tar) 1.35'" \
     "--help : echo '--zstd'" \
     "-c --zstd -P -f archive.tzst C:/cache/foo : echo compressed windows absolute" \
     "--help : echo '--zstd'" \
