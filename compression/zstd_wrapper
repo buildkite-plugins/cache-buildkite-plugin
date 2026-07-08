@@ -13,8 +13,15 @@ is_absolute_path() {
   esac
 }
 
+# Detect if we're using BSD tar (found on macOS)
+is_bsd_tar() {
+  tar --version 2>&1 | grep -q -i "bsdtar"
+}
+
 # Determine how to use zstd compression
-if tar --help | grep -q -- "--zstd"; then
+if is_bsd_tar && command -v zstd >/dev/null 2>&1; then
+  ZSTD_OPT="--use-compress-program=zstd"
+elif tar --help | grep -q -- "--zstd"; then
   ZSTD_OPT="--zstd"
 elif command -v zstd >/dev/null 2>&1; then
   ZSTD_OPT="--use-compress-program=zstd"
