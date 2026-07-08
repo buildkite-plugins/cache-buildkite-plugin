@@ -229,3 +229,39 @@ setup() {
   unstub mv
   unstub zip
 }
+
+@test 'zstd_wrapper uses --use-compress-program=zstd on BSD tar' {
+  stub tar \
+    "--version : echo 'bsdtar 3.5.1'" \
+    "--help : echo '--zstd'" \
+    "-c --use-compress-program=zstd -f \* \* : echo compressed with external zstd on BSD tar"
+
+  # Create a fake zstd binary
+  mkdir -p "${BATS_TEST_TMPDIR}/bin"
+  touch "${BATS_TEST_TMPDIR}/bin/zstd"
+  chmod +x "${BATS_TEST_TMPDIR}/bin/zstd"
+
+  run env PATH="${BATS_TEST_TMPDIR}/bin:${BATS_MOCK_BINDIR}:${PATH}" "${PWD}/compression/zstd_wrapper" compress source target
+  assert_success
+  assert_output --partial "compressed with external zstd on BSD tar"
+
+  unstub tar
+}
+
+@test 'zstd_wrapper decompresses correctly on BSD tar' {
+  stub tar \
+    "--version : echo 'bsdtar 3.5.1'" \
+    "--help : echo '--zstd'" \
+    "-x --use-compress-program=zstd -f \* \* : echo decompressed with external zstd on BSD tar"
+
+  # Create a fake zstd binary
+  mkdir -p "${BATS_TEST_TMPDIR}/bin"
+  touch "${BATS_TEST_TMPDIR}/bin/zstd"
+  chmod +x "${BATS_TEST_TMPDIR}/bin/zstd"
+
+  run env PATH="${BATS_TEST_TMPDIR}/bin:${BATS_MOCK_BINDIR}:${PATH}" "${PWD}/compression/zstd_wrapper" decompress source target
+  assert_success
+  assert_output --partial "decompressed with external zstd on BSD tar"
+
+  unstub tar
+}
