@@ -174,6 +174,7 @@ setup() {
     "--version : echo 'tar (GNU tar) 1.35'" \
     "--help : echo '--zstd'" \
     "-c --zstd -P -f archive.tzst C:/cache/foo : echo compressed windows absolute" \
+    "--version : echo 'tar (GNU tar) 1.35'" \
     "--help : echo '--zstd'" \
     "-x --zstd -P -f archive.tzst C:/cache/foo : echo decompressed windows absolute"
 
@@ -238,7 +239,6 @@ setup() {
 @test 'zstd_wrapper uses --use-compress-program=zstd on BSD tar' {
   stub tar \
     "--version : echo 'bsdtar 3.5.1'" \
-    "--help : echo '--zstd'" \
     "-c --use-compress-program=zstd -f \* \* : echo compressed with external zstd on BSD tar"
 
   # Create a fake zstd binary
@@ -256,7 +256,6 @@ setup() {
 @test 'zstd_wrapper decompresses correctly on BSD tar' {
   stub tar \
     "--version : echo 'bsdtar 3.5.1'" \
-    "--help : echo '--zstd'" \
     "-x --use-compress-program=zstd -f \* \* : echo decompressed with external zstd on BSD tar"
 
   # Create a fake zstd binary
