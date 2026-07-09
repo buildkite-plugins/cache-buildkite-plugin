@@ -30,6 +30,7 @@ setup() {
     "save \* \* : echo saving \$3 in \$2"
 
   stub tar \
+    "--version : echo 'tar (GNU tar) 1.35'" \
     "--help : echo '--zstd'" \
     "echo called tar with options \$@"
 }
