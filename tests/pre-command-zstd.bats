@@ -23,6 +23,7 @@ setup() {
   export BUILDKITE_PIPELINE_SLUG="cache-pipeline"
 
   stub tar \
+    "--version : echo 'tar (GNU tar) 1.35'" \
     "--help : echo '--zstd'" \
     "echo called tar with options \$@"
 }
