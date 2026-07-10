@@ -20,7 +20,7 @@ is_bsd_tar() {
 
 # Determine how to use zstd compression
 if is_bsd_tar && command -v zstd >/dev/null 2>&1; then
-  ZSTD_OPT="--use-compress-program=zstd"
+  ZSTD_OPT="--zstd"
 elif tar --help | grep -q -- "--zstd"; then
   ZSTD_OPT="--zstd"
 elif command -v zstd >/dev/null 2>&1; then
