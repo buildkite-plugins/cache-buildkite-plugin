@@ -239,7 +239,7 @@ setup() {
 @test 'zstd_wrapper uses --use-compress-program=zstd on BSD tar' {
   stub tar \
     "--version : echo 'bsdtar 3.5.1'" \
-    "-c --use-compress-program=zstd -f \* \* : echo compressed with external zstd on BSD tar"
+    "-c --zstd -f \* \* : echo compressed with external zstd on BSD tar"
 
   # Create a fake zstd binary
   mkdir -p "${BATS_TEST_TMPDIR}/bin"
@@ -256,7 +256,7 @@ setup() {
 @test 'zstd_wrapper decompresses correctly on BSD tar' {
   stub tar \
     "--version : echo 'bsdtar 3.5.1'" \
-    "-x --use-compress-program=zstd -f \* \* : echo decompressed with external zstd on BSD tar"
+    "-x --zstd -f \* \* : echo decompressed with external zstd on BSD tar"
 
   # Create a fake zstd binary
   mkdir -p "${BATS_TEST_TMPDIR}/bin"
