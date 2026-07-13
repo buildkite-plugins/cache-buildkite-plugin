@@ -39,6 +39,12 @@ The plugin supports various backends and compression algorithms, and some enviro
 - `gsutil` or `gcloud storage` Google Cloud SDK CLI for reading and writing to a GCS backend
 - `az` Azure CLI for reading and writing to an Azure Blob Storage backend
 
+**Note**: macOS / BSD tar compatibility
+
+The cache plugin supports zstd compression when using both GNU tar and BSD tar (macOS default `tar`). However, the CI test suite runs on Linux and uses stubbed `tar` commands for most archive-related tests, so it does not validate the full tar/zstd round trip on macOS.
+
+When making changes related to zstd compression, tar invocation, or archive restoration, verify the behavior on a macOS host with the system `bsdtar`
+
 ## Mandatory parameters
 
 ### `path` (string)
