@@ -67,6 +67,14 @@ restore_cache() {
 
   key="$(build_key "${from}")"
 
+  # Compression always produces a single object. Avoid a separate AWS CLI
+  # invocation to distinguish files from directories in this case, while
+  # retaining s3 cp's managed transfer handling for large archives.
+  if [ "${BUILDKITE_PLUGIN_CACHE_COMPRESSION:-none}" != 'none' ]; then
+    s3_copy "s3://${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}/${key}" "${to}" false
+    return $?
+  fi
+
   # if the object does not exist, assume it is a folder so use sync
   if ! aws_cmd s3api head-object --bucket "${BUILDKITE_PLUGIN_S3_CACHE_BUCKET}" --key "${key}"; then
     sync=true
