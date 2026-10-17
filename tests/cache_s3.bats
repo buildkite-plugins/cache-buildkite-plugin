@@ -58,6 +58,15 @@ setup() {
   unstub aws
 }
 
+@test 'Exists propagates listing failures instead of reporting a cache hit' {
+  stub aws 's3api list-objects-v2 --bucket my-bucket --prefix cache-key --max-items 1 --query Contents : exit 42'
+
+  run "${PWD}/backends/cache_s3" exists cache-key
+
+  assert_failure 42
+  unstub aws
+}
+
 @test 'Verbose flag passed when environment is set' {
   export BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS=1
   stub aws \
