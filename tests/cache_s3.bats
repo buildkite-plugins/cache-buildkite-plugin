@@ -9,6 +9,46 @@ setup() {
   export BUILDKITE_PLUGIN_S3_CACHE_BUCKET=my-bucket
 }
 
+@test 'Compressed restores skip object-type probing and preserve S3 options' {
+  export BUILDKITE_PLUGIN_S3_CACHE_PREFIX=cache-prefix
+  export BUILDKITE_PLUGIN_S3_CACHE_PROFILE=custom-profile
+  export BUILDKITE_PLUGIN_S3_CACHE_ENDPOINT=https://s3.somewhere.com
+  export BUILDKITE_PLUGIN_S3_CACHE_ONLY_SHOW_ERRORS=1
+
+  for compression in zstd tgz zip custom; do
+    export BUILDKITE_PLUGIN_CACHE_COMPRESSION="$compression"
+    stub aws '--profile custom-profile --endpoint-url https://s3.somewhere.com s3 cp --only-show-errors s3://my-bucket/cache-prefix/archive \* : echo downloaded'
+
+    run "${PWD}/backends/cache_s3" get archive "${BATS_TEST_TMPDIR}/download"
+
+    assert_success
+    assert_output 'downloaded'
+    unstub aws
+  done
+}
+
+@test 'Compressed download failures propagate without falling back to sync' {
+  export BUILDKITE_PLUGIN_CACHE_COMPRESSION=zstd
+  stub aws 's3 cp s3://my-bucket/archive \* : exit 42'
+
+  run "${PWD}/backends/cache_s3" get archive "${BATS_TEST_TMPDIR}/download"
+
+  assert_failure 42
+  unstub aws
+}
+
+@test 'Explicitly disabled compression still probes the object type' {
+  export BUILDKITE_PLUGIN_CACHE_COMPRESSION=none
+  stub aws \
+    's3api head-object --bucket my-bucket --key archive : true' \
+    's3 cp s3://my-bucket/archive \* : true'
+
+  run "${PWD}/backends/cache_s3" get archive "${BATS_TEST_TMPDIR}/download"
+
+  assert_success
+  unstub aws
+}
+
 # teardown() {
 #   rm -rf "${BUILDKITE_PLUGIN_FS_CACHE_FOLDER}"
 # }
