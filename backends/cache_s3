@@ -55,7 +55,7 @@ s3_listobjects() {
       --prefix "$(build_key "${prefix}")" \
       --max-items 1 \
       --query Contents
-  )"
+  )" || return $?
 
   [ "${result}" != 'null' ]
 }
